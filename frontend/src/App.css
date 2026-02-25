@@ -1,0 +1,475 @@
+/* File purpose: Styling rules for this Netflix Clone module/page. */
+:root {
+  --app-bg-base: #090909;
+  --app-bg-elev: #131313;
+  --app-surface: rgba(18, 18, 18, 0.72);
+  --app-border: rgba(255, 255, 255, 0.14);
+  --app-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
+  --app-highlight: rgba(229, 9, 20, 0.35);
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(1200px 520px at 90% -10%, rgba(229, 9, 20, 0.18), transparent 58%),
+    radial-gradient(900px 500px at -10% 15%, rgba(120, 20, 24, 0.2), transparent 65%),
+    linear-gradient(180deg, #0a0a0a, #050505 55%, #050505);
+}
+
+.app-shell::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background-image: radial-gradient(rgba(255, 255, 255, 0.055) 0.8px, transparent 0.8px);
+  background-size: 3px 3px;
+  opacity: 0.32;
+}
+
+.hero-ambient {
+  position: relative;
+}
+
+.hero-ambient::after {
+  position: absolute;
+  inset: -20% -10% 0;
+  z-index: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 35%, rgba(255, 255, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 78% 18%, rgba(229, 9, 20, 0.25), transparent 34%),
+    radial-gradient(circle at 62% 80%, rgba(80, 16, 20, 0.22), transparent 38%);
+  filter: blur(38px);
+  animation: ambientShift 14s ease-in-out infinite alternate;
+}
+
+.glass-panel {
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: var(--app-shadow);
+}
+
+.smooth-enter {
+  animation: smoothEnter 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-in > * {
+  animation: smoothEnter 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-in > *:nth-child(1) { animation-delay: 60ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 110ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 210ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 260ms; }
+
+.elevate-on-hover {
+  transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+}
+
+.elevate-on-hover:hover {
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.44);
+}
+
+.soft-ring:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.section-title {
+  letter-spacing: 0.02em;
+  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.hero-kicker {
+  animation: glowPulse 2.6s ease-in-out infinite;
+}
+
+.cta-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-shimmer::after {
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 70%;
+  height: 100%;
+  content: "";
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-20deg);
+  animation: buttonShine 2.8s ease-in-out infinite;
+}
+
+.film-card {
+  transform-origin: center;
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 260ms ease, border-color 260ms ease;
+}
+
+.film-card:hover {
+  transform: translateY(-8px) scale(1.065);
+  box-shadow: 0 26px 52px rgba(0, 0, 0, 0.5);
+}
+
+.film-card img {
+  transition: transform 420ms ease, filter 320ms ease;
+}
+
+.film-card:hover img {
+  transform: scale(1.08);
+  filter: saturate(1.15);
+}
+
+.rail-pop {
+  animation: railPop 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.marquee-card {
+  transition: transform 280ms ease, box-shadow 280ms ease;
+}
+
+.marquee-card:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+}
+
+.modal-overlay {
+  animation: fadeBackdrop 220ms ease-out both;
+}
+
+.modal-panel {
+  animation: modalEnter 260ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.nav-link {
+  position: relative;
+  transform: translateY(0);
+  transition: color 220ms ease, transform 220ms ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-2px);
+}
+
+.nav-link::after {
+  position: absolute;
+  left: 0;
+  bottom: -7px;
+  width: 100%;
+  height: 2px;
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 240ms ease;
+  background: linear-gradient(90deg, rgba(229, 9, 20, 0.25), rgba(229, 9, 20, 1));
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  transform: scaleX(1);
+}
+
+.profile-orb {
+  position: relative;
+}
+
+.profile-orb::before {
+  position: absolute;
+  inset: -2px;
+  border-radius: 10px;
+  z-index: -1;
+  content: "";
+  background: linear-gradient(130deg, rgba(229, 9, 20, 0.7), rgba(255, 255, 255, 0.05), rgba(229, 9, 20, 0.7));
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 240ms ease;
+  animation: edgeSweep 2.6s linear infinite;
+}
+
+.profile-orb:hover::before,
+.profile-orb:focus-within::before {
+  opacity: 1;
+}
+
+.dropdown-item {
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.dropdown-item:hover {
+  transform: translateX(4px);
+}
+
+.profile-shell {
+  position: relative;
+}
+
+.profile-shell::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 85% 8%, rgba(229, 9, 20, 0.22), transparent 33%),
+    radial-gradient(circle at 10% 88%, rgba(255, 255, 255, 0.1), transparent 26%);
+}
+
+.profile-card {
+  position: relative;
+  z-index: 1;
+}
+
+.metric-card {
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36);
+}
+
+.hero-glow::before {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  content: "";
+  background: radial-gradient(circle at 78% 28%, rgba(229, 9, 20, 0.2), transparent 42%);
+  pointer-events: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.animate-slow-zoom {
+  animation: slowZoom 18s ease-in-out infinite alternate;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 700ms ease-out both;
+}
+
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: black;
+}
+
+.hero-video iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 56.25vw;
+  min-width: 177.78vh;
+  min-height: 100%;
+  transform: translate(-50%, -50%);
+  border: 0;
+}
+
+.marquee-mask {
+  position: relative;
+}
+
+.marquee-mask::before,
+.marquee-mask::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 140px;
+  content: "";
+  pointer-events: none;
+  z-index: 2;
+}
+
+.marquee-mask::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.95), transparent);
+}
+
+.marquee-mask::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.95), transparent);
+}
+
+.marquee-track {
+  animation: marqueeScroll 28s linear infinite;
+}
+
+.marquee-track-reverse {
+  animation-name: marqueeScrollReverse;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marqueeScrollReverse {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slowZoom {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes smoothEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ambientShift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-1.5%, -1.2%, 0) scale(1.05);
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.95;
+    text-shadow: 0 0 0 rgba(229, 9, 20, 0);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 16px rgba(229, 9, 20, 0.45);
+  }
+}
+
+@keyframes buttonShine {
+  0%,
+  35% {
+    left: -130%;
+  }
+  65%,
+  100% {
+    left: 160%;
+  }
+}
+
+@keyframes railPop {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes edgeSweep {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slow-zoom,
+  .animate-fade-in-up,
+  .marquee-track,
+  .smooth-enter,
+  .stagger-in > *,
+  .hero-ambient::after,
+  .hero-kicker,
+  .cta-shimmer::after,
+  .rail-pop,
+  .modal-overlay,
+  .modal-panel,
+  .profile-orb::before {
+    animation: none !important;
+  }
+
+  .elevate-on-hover,
+  .elevate-on-hover:hover,
+  .film-card,
+  .film-card:hover,
+  .marquee-card,
+  .marquee-card:hover,
+  .nav-link,
+  .nav-link:hover,
+  .dropdown-item,
+  .dropdown-item:hover,
+  .metric-card,
+  .metric-card:hover {
+    transition: none !important;
+    transform: none !important;
+  }
+}

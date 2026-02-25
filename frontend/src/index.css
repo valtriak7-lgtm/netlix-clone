@@ -1,0 +1,82 @@
+/* File purpose: Styling rules for this Netflix Clone module/page. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+a,
+button,
+input,
+select {
+  transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.theme-light body,
+.theme-light #root {
+  background: #f7f7f8 !important;
+  color: #111827 !important;
+}
+
+.theme-light .bg-black {
+  background-color: #f7f7f8 !important;
+}
+
+.theme-light .bg-black\/70,
+.theme-light .bg-black\/80,
+.theme-light .bg-black\/90,
+.theme-light .bg-neutral-500\/70 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.theme-light .bg-neutral-900,
+.theme-light .bg-neutral-900\/70,
+.theme-light .bg-neutral-900\/60,
+.theme-light .bg-neutral-800,
+.theme-light .bg-neutral-800\/60 {
+  background-color: #ffffff !important;
+}
+
+.theme-light .hero-glow::before {
+  background: radial-gradient(circle at 78% 28%, rgba(229, 9, 20, 0.08), transparent 42%) !important;
+}
+
+.theme-light [class*="bg-gradient-to-r"],
+.theme-light [class*="bg-gradient-to-t"] {
+  opacity: 0.35;
+}
+
+.theme-light .text-white {
+  color: #111827 !important;
+}
+
+.theme-light .text-neutral-400,
+.theme-light .text-neutral-300,
+.theme-light .text-neutral-200 {
+  color: #4b5563 !important;
+}
+
+.theme-light .border-neutral-800,
+.theme-light .border-neutral-700,
+.theme-light .border-neutral-600 {
+  border-color: #d1d5db !important;
+}
