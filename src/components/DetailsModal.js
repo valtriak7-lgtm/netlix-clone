@@ -123,8 +123,8 @@ function DetailsModal({ item, inList, onToggleList, onClose, onResolveTrailer, a
   }
 
   return (
-    <div className="modal-overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 px-4 py-6 sm:items-center sm:py-10">
-      <div className="modal-panel relative max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-neutral-900 text-white shadow-xl">
+    <div className="movie-modal-overlay modal-overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-6 sm:items-center sm:py-10">
+      <div className="movie-modal-panel modal-panel glass-panel relative max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-lg bg-neutral-900 text-white shadow-xl">
         <button
           type="button"
           onClick={onClose}
@@ -188,12 +188,12 @@ function DetailsModal({ item, inList, onToggleList, onClose, onResolveTrailer, a
           {trailerUrl && (
             <div
               ref={trailerRef}
-              className="overflow-hidden rounded-md border border-neutral-800"
+              className="movie-player-shell overflow-hidden rounded-md border border-neutral-800"
             >
               <iframe
                 title={`${item.title} trailer`}
                 src={trailerEmbedUrl}
-                className="aspect-video w-full"
+                className="movie-player-frame aspect-video w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />

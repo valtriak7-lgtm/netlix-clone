@@ -3,9 +3,46 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 
+function normalizeProfileId(value = '') {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^[.-]+|[.-]+$/g, '')
+    .slice(0, 24);
+}
+
+function isValidProfileId(value = '') {
+  return /^[a-z0-9](?:[a-z0-9._-]{1,22}[a-z0-9])?$/.test(value);
+}
+
+async function generateUniqueProfileId(baseValue, excludedUserId = null) {
+  const base = normalizeProfileId(baseValue) || `user-${Date.now().toString().slice(-6)}`;
+  let candidate = base;
+  let attempt = 0;
+
+  while (attempt < 25) {
+    const query = excludedUserId
+      ? { profileId: candidate, _id: { $ne: excludedUserId } }
+      : { profileId: candidate };
+    // eslint-disable-next-line no-await-in-loop
+    const exists = await User.findOne(query).lean();
+    if (!exists) {
+      return candidate;
+    }
+    attempt += 1;
+    candidate = `${base.slice(0, Math.max(1, 24 - String(attempt).length - 1))}-${attempt}`;
+  }
+
+  return `${base.slice(0, 18)}-${Date.now().toString().slice(-5)}`;
+}
+
 function sanitizeUser(userDoc) {
+  const id = userDoc._id.toString();
   return {
-    id: userDoc._id.toString(),
+    id,
+    profileId: userDoc.profileId || `user-${id.slice(-6)}`,
     name: userDoc.name,
     email: userDoc.email,
     avatar: userDoc.avatar,
@@ -31,7 +68,13 @@ function assertDbConnected() {
 async function register(req, res, next) {
   try {
     assertDbConnected();
-    const { name = '', email = '', password = '', role = 'user' } = req.body || {};
+    const {
+      name = '',
+      email = '',
+      password = '',
+      role = 'user',
+      profileId = '',
+    } = req.body || {};
 
     if (!name.trim() || !email.trim() || !password.trim()) {
       return res.status(400).json({ message: 'Name, email, and password are required.' });
@@ -50,6 +93,7 @@ async function register(req, res, next) {
     const passwordHash = await bcrypt.hash(password.trim(), 10);
     const displayName = name.trim();
     const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`;
+    const safeProfileId = await generateUniqueProfileId(profileId || displayName);
 
     const allowedRoles = new Set(['user', 'admin', 'superadmin']);
     const safeRole = allowedRoles.has(String(role).toLowerCase()) ? String(role).toLowerCase() : 'user';
@@ -58,6 +102,7 @@ async function register(req, res, next) {
       name: displayName,
       email: normalizedEmail,
       passwordHash,
+      profileId: safeProfileId,
       avatar,
       role: safeRole,
       subscription: {
@@ -110,7 +155,13 @@ async function login(req, res, next) {
 async function updateProfile(req, res, next) {
   try {
     assertDbConnected();
-    const { userId = '', name = '', email = '', avatar = '' } = req.body || {};
+    const {
+      userId = '',
+      profileId = '',
+      name = '',
+      email = '',
+      avatar = '',
+    } = req.body || {};
 
     if (!userId.trim()) {
       return res.status(400).json({ message: 'User id is required.' });
@@ -123,6 +174,25 @@ async function updateProfile(req, res, next) {
 
     if (name.trim()) {
       user.name = name.trim();
+    }
+
+    if (profileId.trim()) {
+      const normalizedProfileId = normalizeProfileId(profileId);
+      if (!isValidProfileId(normalizedProfileId)) {
+        return res.status(400).json({
+          message: 'Profile ID must be 3-24 chars using letters, numbers, ".", "_" or "-".',
+        });
+      }
+      const existingProfile = await User.findOne({
+        profileId: normalizedProfileId,
+        _id: { $ne: user._id },
+      });
+      if (existingProfile) {
+        return res.status(409).json({ message: 'Profile ID is already taken.' });
+      }
+      user.profileId = normalizedProfileId;
+    } else if (!user.profileId) {
+      user.profileId = await generateUniqueProfileId(user.name || user.email || user._id.toString(), user._id);
     }
 
     if (email.trim()) {

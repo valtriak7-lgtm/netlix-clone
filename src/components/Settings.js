@@ -1,5 +1,165 @@
 // File purpose: Application logic for this Netflix Clone module.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+const DEFAULT_NETFLIX_PROFILE_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Netflix_2015_N_logo.svg';
+const CUSTOM_PROFILE_AVATAR_URL = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%230b0b0b%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23202020%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22200%22 height=%22200%22 rx=%2224%22 fill=%22url(%23bg)%22/%3E%3Ccircle cx=%22100%22 cy=%2284%22 r=%2235%22 fill=%22%23e50914%22/%3E%3Crect x=%2248%22 y=%22128%22 width=%22104%22 height=%2244%22 rx=%2222%22 fill=%22%23e50914%22/%3E%3C/svg%3E';
+const MAX_AVATAR_DIMENSION = 1024;
+const MAX_AVATAR_BYTES = 7 * 1024 * 1024;
+const CROP_PREVIEW_SIZE = 320;
+const CROP_OUTPUT_SIZE = 512;
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => reject(new Error('Could not read this image. Try another file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not process this image. Try another file.'));
+    image.src = dataUrl;
+  });
+}
+
+function estimateDataUrlBytes(dataUrl) {
+  const base64 = (dataUrl.split(',')[1] || '').trim();
+  return Math.ceil((base64.length * 3) / 4);
+}
+
+async function optimizeAvatarFromFile(file) {
+  const originalDataUrl = await readFileAsDataUrl(file);
+  const image = await loadImage(originalDataUrl);
+
+  const longestEdge = Math.max(image.width, image.height);
+  const scale = longestEdge > MAX_AVATAR_DIMENSION ? MAX_AVATAR_DIMENSION / longestEdge : 1;
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    return originalDataUrl;
+  }
+
+  context.drawImage(image, 0, 0, width, height);
+
+  let quality = 0.92;
+  let optimized = canvas.toDataURL('image/jpeg', quality);
+
+  while (estimateDataUrlBytes(optimized) > MAX_AVATAR_BYTES && quality > 0.45) {
+    quality -= 0.08;
+    optimized = canvas.toDataURL('image/jpeg', quality);
+  }
+
+  return optimized;
+}
+
+function AvatarCropperModal({
+  source,
+  zoom,
+  panX,
+  panY,
+  onZoomChange,
+  onPanXChange,
+  onPanYChange,
+  onCancel,
+  onApply,
+}) {
+  if (!source) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-sm">
+      <div className="glass-panel w-full max-w-xl rounded-xl border border-white/20 bg-neutral-900/70 p-5">
+        <h4 className="text-lg font-semibold text-white">Crop Profile Photo</h4>
+        <p className="mt-1 text-sm text-neutral-300">Adjust and save the exact profile area.</p>
+
+        <div className="mt-4 flex justify-center">
+          <div
+            className="relative overflow-hidden rounded-lg border border-white/20 bg-black"
+            style={{ width: CROP_PREVIEW_SIZE, height: CROP_PREVIEW_SIZE }}
+          >
+            <img
+              src={source}
+              alt="Crop source"
+              className="h-full w-full object-cover"
+              style={{
+                transform: `scale(${zoom}) translate(${panX}%, ${panY}%)`,
+                transformOrigin: 'center center',
+              }}
+            />
+            <div className="pointer-events-none absolute inset-0 border-2 border-white/80" />
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <label className="block text-sm text-neutral-300">
+            Zoom
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.01"
+              value={zoom}
+              onChange={(event) => onZoomChange(Number(event.target.value))}
+              className="mt-1 w-full accent-red-600"
+            />
+          </label>
+          <label className="block text-sm text-neutral-300">
+            Horizontal Position
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              step="1"
+              value={panX}
+              onChange={(event) => onPanXChange(Number(event.target.value))}
+              className="mt-1 w-full accent-red-600"
+            />
+          </label>
+          <label className="block text-sm text-neutral-300">
+            Vertical Position
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              step="1"
+              value={panY}
+              onChange={(event) => onPanYChange(Number(event.target.value))}
+              className="mt-1 w-full accent-red-600"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <button
+            type="button"
+            onClick={onApply}
+            className="flex-1 rounded bg-red-600 py-2 font-semibold text-white hover:bg-red-500"
+          >
+            Apply Crop
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded border border-neutral-500 px-4 py-2 text-sm font-semibold text-white hover:border-white"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Settings({
   user,
@@ -14,6 +174,7 @@ function Settings({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [profileForm, setProfileForm] = useState({
+    profileId: user?.profileId || '',
     name: user?.name || '',
     email: user?.email || '',
     avatar: user?.avatar || '',
@@ -25,6 +186,11 @@ function Settings({
   });
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const avatarInputRef = useRef(null);
+  const [cropSource, setCropSource] = useState('');
+  const [cropZoom, setCropZoom] = useState(1.2);
+  const [cropPanX, setCropPanX] = useState(0);
+  const [cropPanY, setCropPanY] = useState(0);
 
   useEffect(() => {
     setDraft(settings);
@@ -32,6 +198,7 @@ function Settings({
 
   useEffect(() => {
     setProfileForm({
+      profileId: user?.profileId || '',
       name: user?.name || '',
       email: user?.email || '',
       avatar: user?.avatar || '',
@@ -49,9 +216,74 @@ function Settings({
     () =>
       (profileForm.name || '').trim() !== (user?.name || '').trim() ||
       (profileForm.email || '').trim().toLowerCase() !== (user?.email || '').trim().toLowerCase() ||
+      (profileForm.profileId || '').trim().toLowerCase() !== (user?.profileId || '').trim().toLowerCase() ||
       (profileForm.avatar || '').trim() !== (user?.avatar || '').trim(),
     [profileForm, user]
   );
+
+  const onSelectAvatarFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file for avatar.');
+      event.target.value = '';
+      return;
+    }
+
+    setError('');
+    setMessage('Processing image...');
+    try {
+      const result = await optimizeAvatarFromFile(file);
+      if (result) {
+        setCropSource(result);
+        setCropZoom(1.2);
+        setCropPanX(0);
+        setCropPanY(0);
+        setMessage('Image loaded. Adjust crop and apply.');
+      } else {
+        setMessage('');
+        setError('Could not process this image. Try another file.');
+      }
+    } catch (uploadError) {
+      setMessage('');
+      setError(uploadError.message || 'Could not process this image. Try another file.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const onApplyCrop = async () => {
+    try {
+      const image = await loadImage(cropSource);
+      const canvas = document.createElement('canvas');
+      canvas.width = CROP_OUTPUT_SIZE;
+      canvas.height = CROP_OUTPUT_SIZE;
+      const context = canvas.getContext('2d');
+      if (!context) {
+        setError('Could not finalize crop. Please try again.');
+        return;
+      }
+
+      const baseScale = Math.max(CROP_OUTPUT_SIZE / image.width, CROP_OUTPUT_SIZE / image.height);
+      const scaledWidth = image.width * baseScale * cropZoom;
+      const scaledHeight = image.height * baseScale * cropZoom;
+      const maxPanX = Math.max(0, (scaledWidth - CROP_OUTPUT_SIZE) / 2);
+      const maxPanY = Math.max(0, (scaledHeight - CROP_OUTPUT_SIZE) / 2);
+      const offsetX = (CROP_OUTPUT_SIZE - scaledWidth) / 2 + (cropPanX / 100) * maxPanX;
+      const offsetY = (CROP_OUTPUT_SIZE - scaledHeight) / 2 + (cropPanY / 100) * maxPanY;
+
+      context.drawImage(image, offsetX, offsetY, scaledWidth, scaledHeight);
+      const cropped = canvas.toDataURL('image/jpeg', 0.9);
+      setProfileForm((current) => ({ ...current, avatar: cropped }));
+      setCropSource('');
+      setMessage('Cropped image ready. Click Update Profile to save.');
+      setError('');
+    } catch {
+      setError('Could not finalize crop. Please try another image.');
+    }
+  };
 
   const onSubmitProfile = async (event) => {
     event.preventDefault();
@@ -72,6 +304,7 @@ function Settings({
     try {
       const updated = await onUpdateProfile({
         userId: user.id,
+        profileId: profileForm.profileId.trim(),
         name: profileForm.name.trim(),
         email: profileForm.email.trim(),
         avatar: profileForm.avatar.trim(),
@@ -122,14 +355,47 @@ function Settings({
   };
 
   return (
-    <div className="min-h-screen bg-black px-4 py-10 text-white">
-      <div className="mx-auto mt-16 w-full max-w-3xl rounded-lg border border-neutral-800 bg-neutral-900 p-8 shadow-lg">
+    <div className="settings-shell min-h-screen bg-black px-4 py-10 text-white">
+      <div className="settings-panel glass-panel mx-auto mt-16 w-full max-w-3xl rounded-lg border border-neutral-800 bg-neutral-900 p-8 shadow-lg">
         <h2 className="text-3xl font-bold">Settings</h2>
         <p className="mt-2 text-sm text-neutral-400">Everything below is functional and saved.</p>
 
-        <section className="mt-8 border-t border-neutral-800 pt-6">
+        <section className="settings-section mt-8 border-t border-neutral-800 pt-6">
           <h3 className="text-xl font-semibold">Profile</h3>
           <form onSubmit={onSubmitProfile} className="mt-4 space-y-4">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-white/15 bg-black/30 p-5">
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="group relative h-36 w-36 overflow-hidden rounded-full border-2 border-white/30 bg-black/40 ring-2 ring-red-500/20 focus:outline-none sm:h-40 sm:w-40"
+                aria-label="Open profile photo picker"
+              >
+                <img
+                  src={profileForm.avatar || DEFAULT_NETFLIX_PROFILE_URL}
+                  alt="Profile photo"
+                  className="h-full w-full object-cover transition duration-200 group-hover:scale-105"
+                />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-xs font-semibold tracking-wide text-white opacity-0 transition group-hover:opacity-100">
+                  Change Photo
+                </span>
+              </button>
+              <p className="text-xs text-neutral-300">Tap the big profile icon to choose and crop a photo.</p>
+              <button
+                type="button"
+                onClick={() => avatarInputRef.current?.click()}
+                className="rounded border border-neutral-500 px-4 py-2 text-sm font-semibold hover:border-white"
+              >
+                Choose From Device
+              </button>
+            </div>
+            <input
+              type="text"
+              value={profileForm.profileId}
+              onChange={(event) => setProfileForm((current) => ({ ...current, profileId: event.target.value }))}
+              placeholder="Profile ID (e.g. john_doe)"
+              className="w-full rounded border border-neutral-700 bg-neutral-800 px-3 py-2"
+            />
+            <p className="text-xs text-neutral-400">Profile ID is your editable account handle (3-24 chars).</p>
             <input
               type="text"
               value={profileForm.name}
@@ -151,6 +417,29 @@ function Settings({
               placeholder="Avatar URL (optional)"
               className="w-full rounded border border-neutral-700 bg-neutral-800 px-3 py-2"
             />
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onSelectAvatarFile}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setProfileForm((current) => ({ ...current, avatar: DEFAULT_NETFLIX_PROFILE_URL }))}
+                className="rounded border border-neutral-600 px-3 py-1.5 text-xs hover:border-white"
+              >
+                Use Netflix Avatar
+              </button>
+              <button
+                type="button"
+                onClick={() => setProfileForm((current) => ({ ...current, avatar: CUSTOM_PROFILE_AVATAR_URL }))}
+                className="rounded border border-neutral-600 px-3 py-1.5 text-xs hover:border-white"
+              >
+                Use Custom Avatar
+              </button>
+            </div>
             <button
               type="submit"
               disabled={!hasProfileChanges || profileSaving}
@@ -161,7 +450,7 @@ function Settings({
           </form>
         </section>
 
-        <section className="mt-8 border-t border-neutral-800 pt-6">
+        <section className="settings-section mt-8 border-t border-neutral-800 pt-6">
           <h3 className="text-xl font-semibold">Password</h3>
           <form onSubmit={onSubmitPassword} className="mt-4 space-y-4">
             <input
@@ -195,7 +484,7 @@ function Settings({
           </form>
         </section>
 
-        <section className="mt-8 border-t border-neutral-800 pt-6">
+        <section className="settings-section mt-8 border-t border-neutral-800 pt-6">
           <h3 className="text-xl font-semibold">Theme</h3>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <button
@@ -219,7 +508,7 @@ function Settings({
           </div>
         </section>
 
-        <section className="mt-8 border-t border-neutral-800 pt-6">
+        <section className="settings-section mt-8 border-t border-neutral-800 pt-6">
           <h3 className="text-xl font-semibold">Playback</h3>
           <div className="mt-4 space-y-4">
             <label className="flex items-center justify-between rounded border border-neutral-800 bg-neutral-800/60 px-4 py-3">
@@ -265,7 +554,7 @@ function Settings({
           </div>
         </section>
 
-        <section className="mt-8 border-t border-neutral-800 pt-6">
+        <section className="settings-section mt-8 border-t border-neutral-800 pt-6">
           <h3 className="text-xl font-semibold">Preferences</h3>
           <div className="mt-4 space-y-4">
             <div>
@@ -309,7 +598,7 @@ function Settings({
           </div>
         </section>
 
-        <section className="mt-8 border-t border-neutral-800 pt-6">
+        <section className="settings-section mt-8 border-t border-neutral-800 pt-6">
           <h3 className="text-xl font-semibold">Privacy & Security</h3>
           <div className="mt-4 space-y-3">
             <label className="flex items-center justify-between rounded border border-neutral-800 bg-neutral-800/60 px-4 py-3">
@@ -392,6 +681,20 @@ function Settings({
         {message && <p className="mt-2 text-center text-sm text-neutral-300">{message}</p>}
         {error && <p className="mt-2 text-center text-sm text-red-400">{error}</p>}
       </div>
+      <AvatarCropperModal
+        source={cropSource}
+        zoom={cropZoom}
+        panX={cropPanX}
+        panY={cropPanY}
+        onZoomChange={setCropZoom}
+        onPanXChange={setCropPanX}
+        onPanYChange={setCropPanY}
+        onCancel={() => {
+          setCropSource('');
+          setMessage('Crop canceled.');
+        }}
+        onApply={onApplyCrop}
+      />
     </div>
   );
 }

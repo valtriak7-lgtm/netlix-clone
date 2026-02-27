@@ -1,6 +1,9 @@
 // File purpose: Application logic for this Netflix Clone module.
 import { useEffect, useMemo, useState } from 'react';
 
+const DEFAULT_NETFLIX_PROFILE_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Netflix_2015_N_logo.svg';
+const CUSTOM_PROFILE_AVATAR_URL = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%230b0b0b%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23202020%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22200%22 height=%22200%22 rx=%2224%22 fill=%22url(%23bg)%22/%3E%3Ccircle cx=%22100%22 cy=%2284%22 r=%2235%22 fill=%22%23e50914%22/%3E%3Crect x=%2248%22 y=%22128%22 width=%22104%22 height=%2244%22 rx=%2222%22 fill=%22%23e50914%22/%3E%3C/svg%3E';
+
 function Settings({
   user,
   settings,
@@ -151,6 +154,22 @@ function Settings({
               placeholder="Avatar URL (optional)"
               className="w-full rounded border border-neutral-700 bg-neutral-800 px-3 py-2"
             />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setProfileForm((current) => ({ ...current, avatar: DEFAULT_NETFLIX_PROFILE_URL }))}
+                className="rounded border border-neutral-600 px-3 py-1.5 text-xs hover:border-white"
+              >
+                Use Netflix Avatar
+              </button>
+              <button
+                type="button"
+                onClick={() => setProfileForm((current) => ({ ...current, avatar: CUSTOM_PROFILE_AVATAR_URL }))}
+                className="rounded border border-neutral-600 px-3 py-1.5 text-xs hover:border-white"
+              >
+                Use Custom Avatar
+              </button>
+            </div>
             <button
               type="submit"
               disabled={!hasProfileChanges || profileSaving}

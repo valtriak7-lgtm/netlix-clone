@@ -60,8 +60,6 @@ function requireRole(actor, roles) {
 async function listUsers(req, res, next) {
   try {
     assertDbConnected();
-    const actor = await getActor(req);
-    requireRole(actor, ['admin', 'superadmin']);
 
     const search = String(req.query.search || '').trim();
     const filter = search

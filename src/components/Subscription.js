@@ -98,7 +98,7 @@ function Subscription({ user, onUserUpdate }) {
   };
 
   return (
-    <div className="mx-auto mt-10 w-full max-w-5xl rounded-lg border border-neutral-800 bg-neutral-900/90 p-6 text-white shadow-lg">
+    <div className="glass-panel mx-auto mt-10 w-full max-w-5xl rounded-lg border border-neutral-800 bg-neutral-900/90 p-6 text-white shadow-lg">
       <h2 className="text-2xl font-bold">Subscription Services</h2>
       <p className="mt-2 text-sm text-neutral-300">Pick your plan and add-on services.</p>
 

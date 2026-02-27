@@ -28,7 +28,7 @@ function TrailerSlider({ trailers }) {
             {loopItems.map((item, index) => (
               <div
                 key={`${item.id || item.title}-${index}`}
-                className="marquee-card relative h-32 min-w-[230px] overflow-hidden rounded-lg bg-neutral-900 shadow-sm sm:h-40 sm:min-w-[280px]"
+                className="marquee-card glass-panel relative h-32 min-w-[230px] overflow-hidden rounded-lg bg-neutral-900 shadow-sm sm:h-40 sm:min-w-[280px]"
               >
                 <img
                   src={item.image}

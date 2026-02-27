@@ -53,7 +53,8 @@ code {
 .theme-light .bg-neutral-900\/60,
 .theme-light .bg-neutral-800,
 .theme-light .bg-neutral-800\/60 {
-  background-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.64) !important;
+  backdrop-filter: blur(14px);
 }
 
 .theme-light .hero-glow::before {
@@ -78,5 +79,12 @@ code {
 .theme-light .border-neutral-800,
 .theme-light .border-neutral-700,
 .theme-light .border-neutral-600 {
-  border-color: #d1d5db !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+}
+
+.theme-light .glass-panel {
+  background: rgba(255, 255, 255, 0.58) !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(14px);
 }

@@ -6,6 +6,9 @@
   --app-border: rgba(255, 255, 255, 0.14);
   --app-shadow: 0 14px 40px rgba(0, 0, 0, 0.34);
   --app-highlight: rgba(229, 9, 20, 0.35);
+  --app-glass-strong: rgba(14, 14, 14, 0.78);
+  --app-glass-soft: rgba(20, 20, 20, 0.58);
+  --app-glass-blur: blur(14px);
 }
 
 .app-shell {
@@ -47,10 +50,42 @@
 }
 
 .glass-panel {
-  backdrop-filter: blur(12px);
+  backdrop-filter: var(--app-glass-blur);
   border: 1px solid var(--app-border);
   background: var(--app-surface);
   box-shadow: var(--app-shadow);
+}
+
+.app-shell .bg-neutral-900,
+.app-shell .bg-neutral-900\/90,
+.app-shell .bg-neutral-900\/70,
+.app-shell .bg-neutral-800,
+.app-shell .bg-neutral-800\/60,
+.app-shell .bg-black\/90,
+.app-shell .bg-black\/80,
+.app-shell .bg-black\/70 {
+  background-color: var(--app-glass-soft) !important;
+  backdrop-filter: var(--app-glass-blur);
+}
+
+.app-shell .border-neutral-800,
+.app-shell .border-neutral-700,
+.app-shell .border-neutral-600 {
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.app-shell input,
+.app-shell select,
+.app-shell textarea {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.app-shell table tr {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.01)
+  );
 }
 
 .smooth-enter {
@@ -148,6 +183,91 @@
   animation: modalEnter 260ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
 
+.movie-modal-overlay {
+  position: relative;
+  backdrop-filter: blur(10px) saturate(120%);
+}
+
+.movie-modal-overlay::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(229, 9, 20, 0.4), transparent 36%),
+    radial-gradient(circle at 10% 86%, rgba(120, 18, 24, 0.34), transparent 42%),
+    linear-gradient(165deg, rgba(6, 6, 6, 0.72), rgba(12, 12, 12, 0.82));
+}
+
+.movie-modal-panel {
+  background: rgba(8, 8, 8, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(22px) saturate(135%);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.56),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.movie-modal-panel::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(229, 9, 20, 0.22), transparent 34%),
+    radial-gradient(circle at 16% 100%, rgba(255, 255, 255, 0.06), transparent 28%);
+}
+
+.movie-player-shell {
+  background: rgba(6, 6, 6, 0.52);
+  backdrop-filter: blur(18px) saturate(125%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.movie-player-frame {
+  display: block;
+}
+
+.search-input-glass {
+  background: rgba(8, 8, 8, 0.52) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  backdrop-filter: blur(16px) saturate(130%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.search-panel {
+  background: rgba(7, 7, 7, 0.48) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(22px) saturate(140%);
+  position: relative;
+  overflow: hidden;
+}
+
+.search-panel::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 92% 0%, rgba(229, 9, 20, 0.22), transparent 36%),
+    linear-gradient(130deg, rgba(229, 9, 20, 0.1), rgba(0, 0, 0, 0) 30%);
+}
+
+.search-filters select {
+  background: rgba(8, 8, 8, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(14px) saturate(130%);
+}
+
+.search-empty-glass {
+  background: rgba(8, 8, 8, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(20px) saturate(135%);
+}
+
 .nav-link {
   position: relative;
   transform: translateY(0);
@@ -224,6 +344,48 @@
 .profile-card {
   position: relative;
   z-index: 1;
+}
+
+.settings-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.settings-shell::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 88% 8%, rgba(229, 9, 20, 0.35), transparent 34%),
+    radial-gradient(circle at 14% 88%, rgba(140, 20, 28, 0.28), transparent 40%),
+    linear-gradient(180deg, rgba(5, 5, 5, 0.78), rgba(7, 7, 7, 0.92));
+}
+
+.settings-panel {
+  position: relative;
+  overflow: hidden;
+  background: rgba(9, 9, 9, 0.48) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+.settings-panel::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(140deg, rgba(229, 9, 20, 0.2), rgba(0, 0, 0, 0) 30%),
+    radial-gradient(circle at 95% 0%, rgba(229, 9, 20, 0.2), transparent 40%);
+}
+
+.settings-section {
+  border-top-color: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 1rem;
 }
 
 .metric-card {

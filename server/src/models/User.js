@@ -17,6 +17,14 @@ const userSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    profileId: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
     passwordHash: {
       type: String,
       required: true,
