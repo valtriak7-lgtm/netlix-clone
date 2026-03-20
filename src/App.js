@@ -38,6 +38,11 @@ const NAV_ITEMS = [
 const NETFLIX_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg';
 const DEFAULT_NETFLIX_PROFILE_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Netflix_2015_N_logo.svg';
 const CUSTOM_PROFILE_AVATAR_URL = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%230b0b0b%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23202020%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22200%22 height=%22200%22 rx=%2224%22 fill=%22url(%23bg)%22/%3E%3Ccircle cx=%22100%22 cy=%2284%22 r=%2235%22 fill=%22%23e50914%22/%3E%3Crect x=%2248%22 y=%22128%22 width=%22104%22 height=%2244%22 rx=%2222%22 fill=%22%23e50914%22/%3E%3C/svg%3E';
+const FOOTER_IMAGE_LINK = '#';
+const FOOTER_PLACEHOLDER_IMAGE_URL = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%2270%22 viewBox=%220 0 220 70%22%3E%3Crect width=%22220%22 height=%2270%22 rx=%228%22 fill=%22%23161616%22 stroke=%22%23373737%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 fill=%22%23d4d4d4%22 font-size=%2212%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 font-family=%22Arial,sans-serif%22%3EAdd Footer Image%3C/text%3E%3C/svg%3E';
+const NETFLIX_INSTAGRAM_URL = 'https://www.instagram.com/netflix/';
+const NETFLIX_FACEBOOK_URL = 'https://www.facebook.com/netflix/';
+const NETFLIX_WHATSAPP_CHANNEL_URL = 'https://www.whatsapp.com/channel/0029Va5nZToFSAt56yKM0C1f';
 
 // Starter settings applied for new users and as fallback values.
 const DEFAULT_SETTINGS = {
@@ -487,6 +492,51 @@ function Row({ section, onOpen, onPlay, myListIds, onToggleList }) {
 function Footer() {
   return (
     <footer className="border-t border-white/10 bg-black/70 px-4 py-10 text-neutral-400 backdrop-blur-md sm:px-8">
+      <div className="mx-auto mb-8 flex max-w-[1100px] justify-center sm:justify-start">
+        <a href={FOOTER_IMAGE_LINK} className="inline-flex rounded focus:outline-none focus:ring-2 focus:ring-white/60">
+          <img
+            src={FOOTER_PLACEHOLDER_IMAGE_URL}
+            alt="Footer image link placeholder"
+            className="h-[70px] w-[220px] rounded border border-white/20 object-cover transition hover:border-white/50"
+            loading="lazy"
+          />
+        </a>
+      </div>
+      <div className="mx-auto mb-8 flex max-w-[1100px] items-center gap-4">
+        <a
+          href={NETFLIX_INSTAGRAM_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Netflix Instagram"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-neutral-300 transition hover:border-white hover:text-white"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+            <path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.1.1 1.8.2 2.3.4.7.3 1.2.6 1.7 1.1s.8 1 1.1 1.7c.2.5.4 1.2.4 2.3.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.1-.2 1.8-.4 2.3-.3.7-.6 1.2-1.1 1.7s-1 1-1.7 1.1c-.5.2-1.2.4-2.3.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.1-.1-1.8-.2-2.3-.4-.7-.3-1.2-.6-1.7-1.1s-1-1-1.1-1.7c-.2-.5-.4-1.2-.4-2.3C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.1.2-1.8.4-2.3.3-.7.6-1.2 1.1-1.7s1-1 1.7-1.1c.5-.2 1.2-.4 2.3-.4C8.4 2.2 8.8 2.2 12 2.2Zm0 1.9c-3.1 0-3.4 0-4.7.1-1 .1-1.5.2-1.9.3-.5.2-.8.4-1.2.8-.4.4-.6.7-.8 1.2-.1.4-.3.9-.3 1.9-.1 1.3-.1 1.6-.1 4.7s0 3.4.1 4.7c.1 1 .2 1.5.3 1.9.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.1.9.3 1.9.3 1.3.1 1.6.1 4.7.1s3.4 0 4.7-.1c1-.1 1.5-.2 1.9-.3.5-.2.8-.4 1.2-.8.4-.4.6-.7.8-1.2.1-.4.3-.9.3-1.9.1-1.3.1-1.6.1-4.7s0-3.4-.1-4.7c-.1-1-.2-1.5-.3-1.9-.2-.5-.4-.8-.8-1.2-.4-.4-.7-.6-1.2-.8-.4-.1-.9-.3-1.9-.3-1.3-.1-1.6-.1-4.7-.1Zm0 3.2A4.7 4.7 0 1 1 12 16.7 4.7 4.7 0 0 1 12 7.3Zm0 7.5a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6Zm6-7.7a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0Z" />
+          </svg>
+        </a>
+        <a
+          href={NETFLIX_FACEBOOK_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Netflix Facebook"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-neutral-300 transition hover:border-white hover:text-white"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+            <path d="M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.2-1.5 1.5-1.5h1.6V4.6c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.2H8v3.1h2.5v8h3Z" />
+          </svg>
+        </a>
+        <a
+          href={NETFLIX_WHATSAPP_CHANNEL_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Netflix WhatsApp Channel"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/20 text-neutral-300 transition hover:border-white hover:text-white"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+            <path d="M20.5 3.5A11 11 0 0 0 3.7 17.6L2 22l4.5-1.6A11 11 0 1 0 20.5 3.5Zm-8.5 17a9 9 0 0 1-4.6-1.3l-.3-.2-2.7 1 .9-2.6-.2-.3A9 9 0 1 1 12 20.5Zm4.9-6.7c-.3-.1-1.7-.8-2-.8-.3-.1-.4-.1-.6.1l-.9 1.1c-.2.2-.3.2-.6.1-1.6-.8-2.6-1.5-3.7-3.4-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5l.3-.4c.1-.2.1-.3 0-.5 0-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.2-1 1-1 2.4 0 1.4 1 2.8 1.2 2.9.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.1 1.8.1.6-.1 1.7-.7 2-1.3.2-.6.2-1.2.1-1.3-.1-.1-.3-.2-.6-.3Z" />
+          </svg>
+        </a>
+      </div>
       <div className="mx-auto grid max-w-[1100px] grid-cols-2 gap-6 text-sm sm:grid-cols-4">
         <a href="#faq" className="hover:text-white">
           FAQ

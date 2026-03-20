@@ -15,6 +15,8 @@ import { fetchUsers, removeUser, updateUserRole, updateUserSubscription } from '
 import { fetchMovies, fetchTmdbTrailer } from './api/moviesApi';
 import Settings from './components/Settings';
 import Subscription from './components/Subscription';
+import AdminSuiteShowcase from './components/AdminSuiteShowcase';
+import UserExperienceHub from './components/UserExperienceHub';
 import './App.css';
 
 // Lazy-loaded components are downloaded only when needed to keep initial load faster.
@@ -38,6 +40,20 @@ const NAV_ITEMS = [
 const NETFLIX_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg';
 const DEFAULT_NETFLIX_PROFILE_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/0c/Netflix_2015_N_logo.svg';
 const CUSTOM_PROFILE_AVATAR_URL = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 200 200%22%3E%3Cdefs%3E%3ClinearGradient id=%22bg%22 x1=%220%22 y1=%220%22 x2=%221%22 y2=%221%22%3E%3Cstop offset=%220%25%22 stop-color=%22%230b0b0b%22/%3E%3Cstop offset=%22100%25%22 stop-color=%22%23202020%22/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width=%22200%22 height=%22200%22 rx=%2224%22 fill=%22url(%23bg)%22/%3E%3Ccircle cx=%22100%22 cy=%2284%22 r=%2235%22 fill=%22%23e50914%22/%3E%3Crect x=%2248%22 y=%22128%22 width=%22104%22 height=%2244%22 rx=%2222%22 fill=%22%23e50914%22/%3E%3C/svg%3E';
+const NETFLIX_SOCIAL_LINKS = [
+  { name: 'Instagram', href: 'https://www.instagram.com/netflix/', icon: 'instagram' },
+  { name: 'Facebook', href: 'https://www.facebook.com/netflix/', icon: 'facebook' },
+  { name: 'WhatsApp', href: 'https://www.whatsapp.com/channel/0029Va5nZToFSAt56yKM0C1f', icon: 'whatsapp' },
+  { name: 'YouTube', href: 'https://www.youtube.com/@Netflix', icon: 'youtube' },
+  { name: 'X', href: 'https://x.com/netflix', icon: 'x' },
+  { name: 'TikTok', href: 'https://www.tiktok.com/@netflix', icon: 'tiktok' },
+];
+const NETFLIX_POLICY_LINKS = [
+  { label: 'Privacy Statement', href: 'https://help.netflix.com/legal/privacy' },
+  { label: 'Terms of Use', href: 'https://help.netflix.com/legal/termsofuse' },
+  { label: 'Cookie Preferences', href: 'https://help.netflix.com/legal/corpinfo' },
+  { label: 'Legal Notices', href: 'https://help.netflix.com/legal/notices' },
+];
 
 // Starter settings applied for new users and as fallback values.
 const DEFAULT_SETTINGS = {
@@ -335,6 +351,13 @@ function Header({ isScrolled, query, setQuery, user, onLogout }) {
                     >
                       Subscription
                     </NavLink>
+                    <NavLink
+                      to="/user-hub"
+                      className="dropdown-item block px-4 py-2 text-white hover:bg-neutral-800"
+                      onClick={() => setShowDropdown(false)}
+                    >
+                      User Hub
+                    </NavLink>
                     {canAccessRole(user, 'admin') && (
                       <NavLink
                         to="/admin"
@@ -484,9 +507,72 @@ function Row({ section, onOpen, onPlay, myListIds, onToggleList }) {
 }
 
 // Footer: simple footer with static help/account links.
+function SocialIcon({ kind }) {
+  if (kind === 'instagram') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+        <path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.1.1 1.8.2 2.3.4.7.3 1.2.6 1.7 1.1s.8 1 1.1 1.7c.2.5.4 1.2.4 2.3.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.1-.2 1.8-.4 2.3-.3.7-.6 1.2-1.1 1.7s-1 1-1.7 1.1c-.5.2-1.2.4-2.3.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.1-.1-1.8-.2-2.3-.4-.7-.3-1.2-.6-1.7-1.1s-1-1-1.1-1.7c-.2-.5-.4-1.2-.4-2.3C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.1.2-1.8.4-2.3.3-.7.6-1.2 1.1-1.7s1-1 1.7-1.1c.5-.2 1.2-.4 2.3-.4C8.4 2.2 8.8 2.2 12 2.2Zm0 1.9c-3.1 0-3.4 0-4.7.1-1 .1-1.5.2-1.9.3-.5.2-.8.4-1.2.8-.4.4-.6.7-.8 1.2-.1.4-.3.9-.3 1.9-.1 1.3-.1 1.6-.1 4.7s0 3.4.1 4.7c.1 1 .2 1.5.3 1.9.2.5.4.8.8 1.2.4.4.7.6 1.2.8.4.1.9.3 1.9.3 1.3.1 1.6.1 4.7.1s3.4 0 4.7-.1c1-.1 1.5-.2 1.9-.3.5-.2.8-.4 1.2-.8.4-.4.6-.7.8-1.2.1-.4.3-.9.3-1.9.1-1.3.1-1.6.1-4.7s0-3.4-.1-4.7c-.1-1-.2-1.5-.3-1.9-.2-.5-.4-.8-.8-1.2-.4-.4-.7-.6-1.2-.8-.4-.1-.9-.3-1.9-.3-1.3-.1-1.6-.1-4.7-.1Zm0 3.2A4.7 4.7 0 1 1 12 16.7 4.7 4.7 0 0 1 12 7.3Zm0 7.5a2.8 2.8 0 1 0 0-5.6 2.8 2.8 0 0 0 0 5.6Zm6-7.7a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0Z" />
+      </svg>
+    );
+  }
+  if (kind === 'facebook') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+        <path d="M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.2-1.5 1.5-1.5h1.6V4.6c-.3 0-1.2-.1-2.3-.1-2.3 0-3.8 1.4-3.8 3.9v2.2H8v3.1h2.5v8h3Z" />
+      </svg>
+    );
+  }
+  if (kind === 'whatsapp') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+        <path d="M20.5 3.5A11 11 0 0 0 3.7 17.6L2 22l4.5-1.6A11 11 0 1 0 20.5 3.5Zm-8.5 17a9 9 0 0 1-4.6-1.3l-.3-.2-2.7 1 .9-2.6-.2-.3A9 9 0 1 1 12 20.5Zm4.9-6.7c-.3-.1-1.7-.8-2-.8-.3-.1-.4-.1-.6.1l-.9 1.1c-.2.2-.3.2-.6.1-1.6-.8-2.6-1.5-3.7-3.4-.2-.3 0-.5.1-.6.1-.1.3-.4.4-.5l.3-.4c.1-.2.1-.3 0-.5 0-.1-.6-1.5-.9-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.2-1 1-1 2.4 0 1.4 1 2.8 1.2 2.9.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.1 1.8.1.6-.1 1.7-.7 2-1.3.2-.6.2-1.2.1-1.3-.1-.1-.3-.2-.6-.3Z" />
+      </svg>
+    );
+  }
+  if (kind === 'youtube') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+        <path d="M23 12s0-3-0.4-4.4a3.1 3.1 0 0 0-2.2-2.2C19 5 12 5 12 5s-7 0-8.4.4A3.1 3.1 0 0 0 1.4 7.6C1 9 1 12 1 12s0 3 0.4 4.4a3.1 3.1 0 0 0 2.2 2.2C5 19 12 19 12 19s7 0 8.4-.4a3.1 3.1 0 0 0 2.2-2.2C23 15 23 12 23 12Zm-13 3.8V8.2L16.2 12 10 15.8Z" />
+      </svg>
+    );
+  }
+  if (kind === 'x') {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+        <path d="M18.9 2H22l-6.8 7.8L23 22h-6.1l-4.8-6.3L6.6 22H3.5l7.2-8.3L1 2h6.3l4.3 5.8L18.9 2Zm-1.1 18h1.7L6.4 3.9H4.6L17.8 20Z" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 fill-current">
+      <path d="M19.6 6.7a5.5 5.5 0 0 1-3.1-1.7v7.6a4.9 4.9 0 1 1-4.9-4.9c.3 0 .6 0 .9.1v2.4a2.6 2.6 0 1 0 1.7 2.4V2h2.3a3.3 3.3 0 0 0 3.1 2.4V6.7Z" />
+    </svg>
+  );
+}
+
 function Footer() {
   return (
     <footer className="border-t border-white/10 bg-black/70 px-4 py-10 text-neutral-400 backdrop-blur-md sm:px-8">
+      <div className="mx-auto mb-8 max-w-[1100px] rounded-xl border border-white/10 bg-neutral-900/60 p-4">
+        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-neutral-300">Follow Netflix</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {NETFLIX_SOCIAL_LINKS.map((social) => (
+            <a
+              key={social.name}
+              href={social.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Netflix ${social.name}`}
+              className="group inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-neutral-200 transition hover:-translate-y-0.5 hover:border-white/40 hover:bg-black/80 hover:text-white"
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-neutral-800/80 text-neutral-200 transition group-hover:border-white/40 group-hover:text-white">
+                <SocialIcon kind={social.icon} />
+              </span>
+              <span className="text-xs font-semibold tracking-wide">{social.name}</span>
+            </a>
+          ))}
+        </div>
+      </div>
       <div className="mx-auto grid max-w-[1100px] grid-cols-2 gap-6 text-sm sm:grid-cols-4">
         <a href="#faq" className="hover:text-white">
           FAQ
@@ -512,6 +598,22 @@ function Footer() {
         <a href="#contact" className="hover:text-white">
           Contact Us
         </a>
+      </div>
+      <div className="mx-auto mt-8 max-w-[1100px] border-t border-white/10 pt-6">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-neutral-300">Policies</h3>
+        <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+          {NETFLIX_POLICY_LINKS.map((policy) => (
+            <a
+              key={policy.label}
+              href={policy.href}
+              target="_blank"
+              rel="noreferrer"
+              className="text-neutral-400 transition hover:text-white"
+            >
+              {policy.label}
+            </a>
+          ))}
+        </div>
       </div>
     </footer>
   );
@@ -762,55 +864,8 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
   const [sortBy, setSortBy] = useState('relevance');
   const [modalItem, setModalItem] = useState(null);
   const [modalMode, setModalMode] = useState('info');
-  // Keep API-driven results separate so filter changes can reload data.
-  const [reloadedItems, setReloadedItems] = useState(allMovies);
-  // Show refresh feedback while reloading on filter changes.
-  const [isReloading, setIsReloading] = useState(false);
-  // Surface reload errors without breaking already loaded content.
-  const [reloadError, setReloadError] = useState('');
   // useDeferredValue keeps typing smooth by delaying expensive filtering work.
   const deferredQuery = useDeferredValue(query);
-
-  // Keep local reload cache in sync when parent movie data updates.
-  useEffect(() => {
-    setReloadedItems(allMovies);
-  }, [allMovies]);
-
-  // Reload movies whenever search/type/category changes so filter feels live.
-  useEffect(() => {
-    let active = true;
-
-    async function reloadFilteredMovies() {
-      setIsReloading(true);
-      setReloadError('');
-      try {
-        const data = await fetchMovies({
-          limit: 500,
-          search: deferredQuery.trim() || undefined,
-          type: typeFilter !== 'all' ? typeFilter : undefined,
-          category: categoryFilter !== 'all' ? categoryFilter : undefined,
-        });
-        if (!active) {
-          return;
-        }
-        setReloadedItems(Array.isArray(data) ? data : []);
-      } catch (apiError) {
-        if (!active) {
-          return;
-        }
-        setReloadError(apiError.message || 'Unable to refresh filtered movies.');
-      } finally {
-        if (active) {
-          setIsReloading(false);
-        }
-      }
-    }
-
-    void reloadFilteredMovies();
-    return () => {
-      active = false;
-    };
-  }, [deferredQuery, typeFilter, categoryFilter]);
 
   // Convert My List into a Set for fast O(1) lookup by id.
   const myListIds = useMemo(() => new Set(myList.map((item) => item.id)), [myList]);
@@ -828,8 +883,7 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
   // Apply all active filters + search text + sort order to produce visible search results.
   const visibleItems = useMemo(() => {
     const loweredQuery = deferredQuery.trim().toLowerCase();
-    // Start from reloaded data, then apply remaining local-only filters.
-    let items = reloadedItems.filter((item) => {
+    let items = allMovies.filter((item) => {
       if (typeFilter !== 'all' && normalizeContentType(item.type) !== typeFilter) {
         return false;
       }
@@ -862,7 +916,7 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
     }
 
     return items;
-  }, [categoryFilter, deferredQuery, listFilter, myListIds, reloadedItems, sortBy, typeFilter, yearFilter]);
+  }, [allMovies, categoryFilter, deferredQuery, listFilter, myListIds, sortBy, typeFilter, yearFilter]);
 
   return (
     <div className="app-shell min-h-screen bg-black text-white">
@@ -952,9 +1006,9 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
           </div>
         </section>
 
-        {(loading || isReloading) && (
+        {loading && (
           <p className="py-10 text-center text-neutral-300">
-            {loading ? 'Loading titles...' : 'Refreshing titles...'}
+            Loading titles...
           </p>
         )}
         {!loading && error && (
@@ -962,13 +1016,8 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
             {error}
           </p>
         )}
-        {!loading && !error && reloadError && (
-          <p className="mt-4 rounded border border-red-600/40 bg-red-900/20 px-4 py-2 text-sm text-red-200">
-            {reloadError}
-          </p>
-        )}
 
-        {!loading && !isReloading && (
+        {!loading && (
           <section className="mt-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-2xl font-semibold">Search Results</h2>
@@ -1027,7 +1076,6 @@ function LoginPage({ user, onLogin, movies }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
@@ -1087,7 +1135,7 @@ function LoginPage({ user, onLogin, movies }) {
     try {
       const payload = { email: email.trim(), password: password.trim() };
       const authUser = mode === 'signup'
-        ? await registerUser({ ...payload, name: name.trim(), role })
+        ? await registerUser({ ...payload, name: name.trim(), role: 'user' })
         : await loginUser(payload);
 
       onLogin(normalizeUser(authUser));
@@ -1148,15 +1196,9 @@ function LoginPage({ user, onLogin, movies }) {
                   placeholder="Full name"
                   className="w-full rounded bg-neutral-800 px-4 py-3 text-sm text-white outline-none ring-red-600 focus:ring-2"
                 />
-                <select
-                  value={role}
-                  onChange={(event) => setRole(event.target.value)}
-                  className="w-full rounded bg-neutral-800 px-4 py-3 text-sm text-white outline-none ring-red-600 focus:ring-2"
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="superadmin">Super Admin</option>
-                </select>
+                <p className="rounded border border-neutral-700 bg-neutral-900 px-4 py-3 text-xs text-neutral-300">
+                  New signups are created as <span className="font-semibold text-white">user</span> role only.
+                </p>
               </>
             )}
             <input
@@ -1308,7 +1350,8 @@ function HelpPage() {
   );
 }
 
-// UserManagementPanel: admin table to search users and manage plans, status, and roles.
+// UserManagementPanel: retained for fallback admin workflow and reference.
+// eslint-disable-next-line no-unused-vars
 function UserManagementPanel({ user, title, subtitle, movies, myList, canManageRoles, canDeleteUsers }) {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
@@ -1560,32 +1603,28 @@ function UserManagementPanel({ user, title, subtitle, movies, myList, canManageR
 }
 
 // AdminPage: limited admin wrapper around the shared user management panel.
-function AdminPage({ user, movies, myList }) {
+function AdminPage({ user }) {
   return (
-    <UserManagementPanel
-      user={user}
-      title="Admin Dashboard"
-      subtitle="Manage users, plans, and subscription status."
-      movies={movies}
-      myList={myList}
-      canManageRoles={false}
-      canDeleteUsers={false}
-    />
+    <div>
+      <AdminSuiteShowcase
+        user={user}
+        canManageRoles={false}
+        canDeleteUsers={false}
+      />
+    </div>
   );
 }
 
 // SuperAdminPage: full-access admin wrapper for role changes and account deletion.
-function SuperAdminPage({ user, movies, myList }) {
+function SuperAdminPage({ user }) {
   return (
-    <UserManagementPanel
-      user={user}
-      title="Super Admin Console"
-      subtitle="Full control over users, roles, plans, and account lifecycle."
-      movies={movies}
-      myList={myList}
-      canManageRoles
-      canDeleteUsers
-    />
+    <div>
+      <AdminSuiteShowcase
+        user={user}
+        canManageRoles
+        canDeleteUsers
+      />
+    </div>
   );
 }
 
@@ -1826,6 +1865,27 @@ function App() {
               setQuery={setSearchQuery}
             >
               <Subscription user={user} onUserUpdate={(nextUser) => setUser(normalizeUser(nextUser))} />
+            </AppPageLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/user-hub"
+        element={
+          <ProtectedRoute user={user}>
+            <AppPageLayout
+              user={user}
+              onLogout={() => setUser(null)}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+            >
+              <UserExperienceHub
+                user={user}
+                movies={movies}
+                myList={myList}
+                settings={settings}
+                onToggleList={onToggleList}
+              />
             </AppPageLayout>
           </ProtectedRoute>
         }

@@ -1,0 +1,13 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+<style>.t{font:700 30px Arial}.l{font:16px Arial}.s{font:14px Arial}.a{stroke:#222;stroke-width:2;fill:none}.u{fill:#fff;stroke:#333;stroke-width:2}.b{fill:#f9f9f9;stroke:#444;stroke-width:2}.ln{stroke:#555;stroke-width:2}</style>
+<text x="530" y="45" class="t">Use Case 04 - My List Management</text>
+<rect x="260" y="90" width="900" height="740" rx="10" class="b"/><text x="580" y="120" class="l">My List Module</text>
+<circle cx="110" cy="430" r="18" class="a"/><line x1="110" y1="448" x2="110" y2="510" class="a"/><line x1="80" y1="470" x2="140" y2="470" class="a"/><line x1="110" y1="510" x2="85" y2="550" class="a"/><line x1="110" y1="510" x2="135" y2="550" class="a"/><text x="92" y="580" class="s">User</text>
+<ellipse cx="520" cy="300" rx="150" ry="35" class="u"/><text x="452" y="306" class="l">Add to My List</text>
+<ellipse cx="840" cy="300" rx="170" ry="35" class="u"/><text x="750" y="306" class="l">Remove from My List</text>
+<ellipse cx="680" cy="500" rx="200" ry="35" class="u"/><text x="563" y="506" class="l">Persist My List to Local Storage</text>
+<ellipse cx="680" cy="680" rx="170" ry="35" class="u"/><text x="595" y="686" class="l">Render My List Page</text>
+<line x1="140" y1="470" x2="370" y2="300" class="ln"/><line x1="140" y1="470" x2="670" y2="300" class="ln"/>
+<line x1="520" y1="335" x2="620" y2="465" class="ln"/><line x1="840" y1="335" x2="740" y2="465" class="ln"/>
+<line x1="680" y1="535" x2="680" y2="645" class="ln"/>
+</svg>

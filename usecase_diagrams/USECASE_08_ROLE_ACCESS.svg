@@ -1,0 +1,13 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+<style>.t{font:700 30px Arial}.l{font:16px Arial}.s{font:14px Arial}.a{stroke:#222;stroke-width:2;fill:none}.u{fill:#fff;stroke:#333;stroke-width:2}.b{fill:#f9f9f9;stroke:#444;stroke-width:2}.ln{stroke:#555;stroke-width:2}</style>
+<text x="430" y="45" class="t">Use Case 08 - Role Based Route Access</text>
+<rect x="260" y="90" width="900" height="740" rx="10" class="b"/><text x="560" y="120" class="l">Access Control Module</text>
+<circle cx="110" cy="350" r="18" class="a"/><line x1="110" y1="368" x2="110" y2="430" class="a"/><line x1="80" y1="390" x2="140" y2="390" class="a"/><line x1="110" y1="430" x2="85" y2="470" class="a"/><line x1="110" y1="430" x2="135" y2="470" class="a"/><text x="92" y="500" class="s">User</text>
+<ellipse cx="520" cy="220" rx="165" ry="35" class="u"/><text x="430" y="226" class="l">Request Protected Page</text>
+<ellipse cx="840" cy="220" rx="150" ry="35" class="u"/><text x="760" y="226" class="l">ProtectedRoute</text>
+<ellipse cx="520" cy="430" rx="165" ry="35" class="u"/><text x="450" y="436" class="l">RoleRoute Check</text>
+<ellipse cx="840" cy="430" rx="150" ry="35" class="u"/><text x="758" y="436" class="l">Access Granted</text>
+<ellipse cx="680" cy="640" rx="170" ry="35" class="u"/><text x="592" y="646" class="l">Redirect to Home/Login</text>
+<line x1="140" y1="390" x2="355" y2="220" class="ln"/><line x1="685" y1="220" x2="690" y2="220" class="ln"/><line x1="840" y1="255" x2="590" y2="395" class="ln"/><line x1="590" y1="430" x2="690" y2="430" class="ln"/>
+<line x1="520" y1="465" x2="630" y2="605" class="ln"/><line x1="840" y1="465" x2="730" y2="605" class="ln"/>
+</svg>

@@ -1,0 +1,13 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+<style>.t{font:700 30px Arial}.l{font:16px Arial}.s{font:14px Arial}.a{stroke:#222;stroke-width:2;fill:none}.u{fill:#fff;stroke:#333;stroke-width:2}.b{fill:#f9f9f9;stroke:#444;stroke-width:2}.ln{stroke:#555;stroke-width:2}</style>
+<text x="500" y="45" class="t">Use Case 05 - Admin Operations</text>
+<rect x="260" y="90" width="900" height="740" rx="10" class="b"/><text x="610" y="120" class="l">Admin Module</text>
+<circle cx="110" cy="300" r="18" class="a"/><line x1="110" y1="318" x2="110" y2="380" class="a"/><line x1="80" y1="340" x2="140" y2="340" class="a"/><line x1="110" y1="380" x2="85" y2="420" class="a"/><line x1="110" y1="380" x2="135" y2="420" class="a"/><text x="88" y="450" class="s">Admin</text>
+<circle cx="110" cy="620" r="18" class="a"/><line x1="110" y1="638" x2="110" y2="700" class="a"/><line x1="80" y1="660" x2="140" y2="660" class="a"/><line x1="110" y1="700" x2="85" y2="740" class="a"/><line x1="110" y1="700" x2="135" y2="740" class="a"/><text x="62" y="770" class="s">Superadmin</text>
+<ellipse cx="520" cy="220" rx="130" ry="35" class="u"/><text x="470" y="226" class="l">List Users</text>
+<ellipse cx="850" cy="220" rx="190" ry="35" class="u"/><text x="741" y="226" class="l">Update User Subscription</text>
+<ellipse cx="520" cy="500" rx="150" ry="35" class="u"/><text x="449" y="506" class="l">Update User Role</text>
+<ellipse cx="850" cy="500" rx="120" ry="35" class="u"/><text x="798" y="506" class="l">Delete User</text>
+<line x1="140" y1="340" x2="390" y2="220" class="ln"/><line x1="140" y1="340" x2="660" y2="220" class="ln"/>
+<line x1="140" y1="660" x2="390" y2="220" class="ln"/><line x1="140" y1="660" x2="660" y2="220" class="ln"/><line x1="140" y1="660" x2="370" y2="500" class="ln"/><line x1="140" y1="660" x2="730" y2="500" class="ln"/>
+</svg>

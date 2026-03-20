@@ -1,0 +1,16 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+<style>.t{font:700 30px Arial}.l{font:16px Arial}.s{font:14px Arial}.a{stroke:#222;stroke-width:2;fill:none}.u{fill:#fff;stroke:#333;stroke-width:2}.b{fill:#f9f9f9;stroke:#444;stroke-width:2}.ln{stroke:#555;stroke-width:2}</style>
+<text x="490" y="45" class="t">Use Case 03 - Content Discovery</text>
+<rect x="260" y="90" width="900" height="740" rx="10" class="b"/><text x="580" y="120" class="l">Content Discovery Module</text>
+<circle cx="110" cy="320" r="18" class="a"/><line x1="110" y1="338" x2="110" y2="400" class="a"/><line x1="80" y1="360" x2="140" y2="360" class="a"/><line x1="110" y1="400" x2="85" y2="440" class="a"/><line x1="110" y1="400" x2="135" y2="440" class="a"/><text x="92" y="470" class="s">User</text>
+<circle cx="1300" cy="320" r="18" class="a"/><line x1="1300" y1="338" x2="1300" y2="400" class="a"/><line x1="1270" y1="360" x2="1330" y2="360" class="a"/><line x1="1300" y1="400" x2="1275" y2="440" class="a"/><line x1="1300" y1="400" x2="1325" y2="440" class="a"/><text x="1272" y="470" class="s">TMDB API</text>
+<ellipse cx="470" cy="220" rx="140" ry="35" class="u"/><text x="415" y="226" class="l">Browse Home</text>
+<ellipse cx="760" cy="220" rx="150" ry="35" class="u"/><text x="684" y="226" class="l">Browse Movies/TV</text>
+<ellipse cx="1010" cy="220" rx="120" ry="35" class="u"/><text x="960" y="226" class="l">New &amp; Popular</text>
+<ellipse cx="520" cy="430" rx="180" ry="35" class="u"/><text x="420" y="436" class="l">Search / Filter / Sort</text>
+<ellipse cx="840" cy="430" rx="150" ry="35" class="u"/><text x="775" y="436" class="l">Watch Trailer</text>
+<ellipse cx="680" cy="640" rx="160" ry="35" class="u"/><text x="607" y="646" class="l">View Details</text>
+<line x1="140" y1="360" x2="330" y2="220" class="ln"/><line x1="140" y1="360" x2="610" y2="220" class="ln"/><line x1="140" y1="360" x2="890" y2="220" class="ln"/><line x1="140" y1="360" x2="340" y2="430" class="ln"/><line x1="140" y1="360" x2="690" y2="430" class="ln"/>
+<line x1="1270" y1="360" x2="990" y2="430" class="ln"/><line x1="1270" y1="360" x2="1100" y2="220" class="ln"/>
+<line x1="840" y1="465" x2="730" y2="605" class="ln"/>
+</svg>

@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin', 'superadmin'],
       default: 'user',
     },
+    adminScope: {
+      type: String,
+      enum: ['content_manager', 'analytics_viewer', 'full_access'],
+      default: 'content_manager',
+    },
     subscription: {
       plan: {
         type: String,
@@ -48,6 +53,58 @@ const userSchema = new mongoose.Schema(
         type: Date,
         default: null,
       },
+    },
+    profileId: {
+      type: String,
+      default: '',
+    },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
+    terminatedAt: {
+      type: Date,
+      default: null,
+    },
+    watchHistory: {
+      type: [
+        {
+          movieId: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie', default: null },
+          title: { type: String, default: '' },
+          watchedAt: { type: Date, default: Date.now },
+          progressMinutes: { type: Number, default: 0 },
+        },
+      ],
+      default: [],
+    },
+    downloadHistory: {
+      type: [
+        {
+          movieId: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie', default: null },
+          title: { type: String, default: '' },
+          downloadedAt: { type: Date, default: Date.now },
+          quality: { type: String, default: '720p' },
+        },
+      ],
+      default: [],
+    },
+    paymentHistory: {
+      type: [
+        {
+          invoiceId: { type: String, default: '' },
+          amount: { type: Number, default: 0 },
+          currency: { type: String, default: 'INR' },
+          status: { type: String, enum: ['paid', 'failed', 'refunded', 'pending'], default: 'pending' },
+          paidAt: { type: Date, default: Date.now },
+          plan: { type: String, default: 'basic' },
+        },
+      ],
+      default: [],
+    },
+    sessionMetrics: {
+      totalHoursWatched: { type: Number, default: 0 },
+      lastActiveAt: { type: Date, default: null },
+      monthlySessions: { type: Number, default: 0 },
     },
   },
   { timestamps: true }

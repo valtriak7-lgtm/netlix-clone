@@ -1,0 +1,13 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+<style>.t{font:700 30px Arial}.l{font:16px Arial}.u{fill:#fff;stroke:#333;stroke-width:2}.b{fill:#f9f9f9;stroke:#444;stroke-width:2}.ln{stroke:#555;stroke-width:2}</style>
+<text x="450" y="45" class="t">Use Case 07 - Fallback / Resilience</text>
+<rect x="260" y="90" width="900" height="740" rx="10" class="b"/><text x="590" y="120" class="l">Fallback Module</text>
+<ellipse cx="700" cy="190" rx="170" ry="35" class="u"/><text x="612" y="196" class="l">Request Movie Data</text>
+<ellipse cx="700" cy="320" rx="150" ry="35" class="u"/><text x="635" y="326" class="l">Try TMDB API</text>
+<ellipse cx="430" cy="470" rx="170" ry="35" class="u"/><text x="340" y="476" class="l">If TMDB fails: Try DB</text>
+<ellipse cx="980" cy="470" rx="170" ry="35" class="u"/><text x="890" y="476" class="l">If TMDB works: Return</text>
+<ellipse cx="430" cy="640" rx="190" ry="35" class="u"/><text x="320" y="646" class="l">If DB fails: Use Seed Data</text>
+<ellipse cx="980" cy="640" rx="170" ry="35" class="u"/><text x="900" y="646" class="l">Return Final Data</text>
+<line x1="700" y1="225" x2="700" y2="285" class="ln"/><line x1="650" y1="350" x2="500" y2="440" class="ln"/><line x1="750" y1="350" x2="900" y2="440" class="ln"/>
+<line x1="430" y1="505" x2="430" y2="605" class="ln"/><line x1="530" y1="640" x2="810" y2="640" class="ln"/><line x1="980" y1="505" x2="980" y2="605" class="ln"/>
+</svg>
