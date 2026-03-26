@@ -9,12 +9,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { loginUser, registerUser, updatePassword, updateProfile } from './api/authApi';
 import { fetchUsers, removeUser, updateUserRole, updateUserSubscription } from './api/adminApi';
 import { fetchMovies, fetchTmdbTrailer } from './api/moviesApi';
 import Settings from './components/Settings';
 import Subscription from './components/Subscription';
+import AdminSuiteShowcase from './components/AdminSuiteShowcase';
+import UserExperienceHub from './components/UserExperienceHub';
 import './App.css';
 
 // Lazy-loaded components are downloaded only when needed to keep initial load faster.
@@ -25,6 +27,13 @@ const TrailerSlider = lazy(() => import('./components/TrailerSlider'));
 const USER_KEY = 'netflix_user';
 const LIST_KEY = 'netflix_my_list';
 const SETTINGS_KEY = 'netflix_settings';
+const WATCH_PROGRESS_KEY = 'netflix_watch_progress';
+const WATCH_HISTORY_KEY = 'netflix_watch_history';
+const PROFILES_KEY = 'netflix_profiles';
+const ACTIVE_PROFILE_KEY = 'netflix_active_profile';
+const DOWNLOADS_KEY = 'netflix_downloads';
+const REVIEWS_KEY = 'netflix_reviews';
+const KIDS_PIN_KEY = 'netflix_kids_pin';
 
 // Main header navigation links shown at the top of the app.
 const NAV_ITEMS = [
@@ -33,6 +42,9 @@ const NAV_ITEMS = [
   { to: '/movies', label: 'Movies' },
   { to: '/new-popular', label: 'New & Popular' },
   { to: '/my-list', label: 'My List' },
+  { to: '/watch-history', label: 'History' },
+  { to: '/experience', label: 'Experience' },
+  { to: '/feature-lab', label: 'Feature Lab' },
 ];
 // Public image URLs used for branding and default profile visuals.
 const NETFLIX_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg';
@@ -117,6 +129,24 @@ function normalizeContentType(type) {
   return '';
 }
 
+function fuzzyIncludes(text, query) {
+  const source = String(text || '').toLowerCase();
+  const needle = String(query || '').toLowerCase().trim();
+  if (!needle) {
+    return true;
+  }
+  if (source.includes(needle)) {
+    return true;
+  }
+  let index = 0;
+  for (let i = 0; i < source.length && index < needle.length; i += 1) {
+    if (source[i] === needle[index]) {
+      index += 1;
+    }
+  }
+  return index === needle.length;
+}
+
 // NetflixBrand: renders the Netflix logo in compact or regular size.
 function NetflixBrand({ compact = false }) {
   const widthClass = compact ? 'w-24 sm:w-28' : 'w-28 sm:w-36';
@@ -180,6 +210,73 @@ function groupByCategory(movies) {
     title,
     items,
   }));
+}
+
+function buildTopTenSection(movies) {
+  const ranked = [...movies]
+    .sort((a, b) => {
+      const ratingA = Number.parseFloat(String(a.rating || '').replace(/[^\d.]/g, '')) || 0;
+      const ratingB = Number.parseFloat(String(b.rating || '').replace(/[^\d.]/g, '')) || 0;
+      if (ratingB !== ratingA) {
+        return ratingB - ratingA;
+      }
+      return Number(b.year || 0) - Number(a.year || 0);
+    })
+    .slice(0, 10);
+
+  return { id: 'top-10', title: 'Top 10 in Your Region', items: ranked };
+}
+
+function buildContinueWatchingSection(movies, progressMap) {
+  if (!movies.length || !progressMap || typeof progressMap !== 'object') {
+    return { id: 'continue-watching', title: 'Continue Watching', items: [] };
+  }
+
+  const lookup = new Map(movies.map((movie) => [String(movie.id), movie]));
+  const entries = Object.entries(progressMap)
+    .filter(([, value]) => Number(value) > 0 && Number(value) < 95)
+    .sort(([, a], [, b]) => Number(b) - Number(a));
+
+  const items = entries
+    .map(([id]) => lookup.get(String(id)))
+    .filter(Boolean)
+    .slice(0, 20);
+
+  return { id: 'continue-watching', title: 'Continue Watching', items };
+}
+
+function buildHistorySection(movies, watchHistory) {
+  if (!Array.isArray(watchHistory) || !watchHistory.length) {
+    return { id: 'watch-history', title: 'Recently Watched', items: [] };
+  }
+
+  const lookup = new Map(movies.map((movie) => [String(movie.id), movie]));
+  const items = watchHistory
+    .map((id) => lookup.get(String(id)))
+    .filter(Boolean)
+    .slice(0, 20);
+
+  return { id: 'watch-history', title: 'Recently Watched', items };
+}
+
+function buildRecommendationSection(movies, myList, watchHistory) {
+  if (!movies.length) {
+    return { id: 'recommended', title: 'Because You Watched', items: [] };
+  }
+
+  const seedItems = [...myList, ...watchHistory.map((id) => movies.find((movie) => String(movie.id) === String(id)))].filter(Boolean);
+  const preferredCategories = new Set(seedItems.map((item) => String(item.category || '').trim()).filter(Boolean));
+  const seenIds = new Set(seedItems.map((item) => String(item.id)));
+
+  const candidates = preferredCategories.size
+    ? movies.filter((item) => preferredCategories.has(String(item.category || '').trim()) && !seenIds.has(String(item.id)))
+    : movies.filter((item) => !seenIds.has(String(item.id)));
+
+  return {
+    id: 'recommended',
+    title: 'Because You Watched',
+    items: candidates.slice(0, 20),
+  };
 }
 
 // resolveTrailerForItem: gets a trailer URL from item data or fetches it from TMDB ids.
@@ -389,7 +486,32 @@ function AppPageLayout({ user, onLogout, query, setQuery, children }) {
         onLogout={onLogout}
       />
       {children}
+      <MobileBottomNav />
     </div>
+  );
+}
+
+function MobileBottomNav() {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/90 px-3 py-2 backdrop-blur md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 text-center text-[11px]">
+        {[
+          { to: '/', label: 'Home' },
+          { to: '/search', label: 'Search' },
+          { to: '/my-list', label: 'My List' },
+          { to: '/watch-history', label: 'History' },
+          { to: '/profile', label: 'Profile' },
+        ].map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => `rounded px-1 py-2 ${isActive ? 'bg-white text-black' : 'text-neutral-300'}`}
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -488,6 +610,26 @@ function Row({ section, onOpen, onPlay, myListIds, onToggleList }) {
   );
 }
 
+function LoadingRails() {
+  return (
+    <div className="space-y-8 py-6">
+      {[1, 2, 3].map((row) => (
+        <div key={row}>
+          <div className="mb-3 h-5 w-44 animate-pulse rounded bg-neutral-800" />
+          <div className="flex gap-2">
+            {[1, 2, 3, 4, 5].map((card) => (
+              <div
+                key={`${row}-${card}`}
+                className="h-44 min-w-[170px] animate-pulse rounded-md bg-neutral-800 sm:h-52 sm:min-w-[220px]"
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Footer: simple footer with static help/account links.
 function Footer() {
   return (
@@ -568,8 +710,22 @@ function Footer() {
 }
 
 // HomePage: main browsing screen with hero banner, rows, and details modal.
-function HomePage({ view, sections, allMovies, loading, error, myList, onToggleList, user, onLogout, query, setQuery }) {
+function HomePage({
+  view,
+  sections,
+  allMovies,
+  loading,
+  error,
+  myList,
+  onToggleList,
+  onPlayItem,
+  user,
+  onLogout,
+  query,
+  setQuery,
+}) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [modalItem, setModalItem] = useState(null);
   const [modalMode, setModalMode] = useState('info');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -615,7 +771,7 @@ function HomePage({ view, sections, allMovies, loading, error, myList, onToggleL
         }
 
         if (lowered) {
-          items = items.filter((item) => item.title.toLowerCase().includes(lowered));
+          items = items.filter((item) => fuzzyIncludes(item.title, lowered));
         }
 
         return { ...section, items };
@@ -720,8 +876,10 @@ function HomePage({ view, sections, allMovies, loading, error, myList, onToggleL
               <button
                 type="button"
                 onClick={() => {
-                  setModalMode('play');
-                  setModalItem(activeHero || featured);
+                  onPlayItem(activeHero || featured);
+                  if ((activeHero || featured)?.id) {
+                    navigate(`/watch/${(activeHero || featured).id}`);
+                  }
                 }}
                 className="cta-shimmer soft-ring rounded bg-white px-7 py-2 font-semibold text-black transition hover:bg-neutral-200"
               >
@@ -749,7 +907,7 @@ function HomePage({ view, sections, allMovies, loading, error, myList, onToggleL
 
 
         <div className="relative z-10 mx-auto mt-[-50px] max-w-[1400px] px-4 pb-14 sm:px-8">
-          {loading && <p className="py-10 text-center text-neutral-300">Loading titles...</p>}
+          {loading && <LoadingRails />}
           {!loading && error && (
             <p className="mb-4 rounded border border-red-600/40 bg-red-900/20 px-4 py-2 text-sm text-red-200">
               {error}
@@ -767,8 +925,8 @@ function HomePage({ view, sections, allMovies, loading, error, myList, onToggleL
                     setModalItem(item);
                   }}
                   onPlay={(item) => {
-                    setModalMode('play');
-                    setModalItem(item);
+                    onPlayItem(item);
+                    navigate(`/watch/${item.id}`);
                   }}
                   myListIds={myListIds}
                   onToggleList={onToggleList}
@@ -803,11 +961,24 @@ function HomePage({ view, sections, allMovies, loading, error, myList, onToggleL
 }
 
 // SearchPage: advanced search with filters, sorting, and modal playback/info.
-function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onLogout, query, setQuery }) {
+function SearchPage({
+  allMovies,
+  loading,
+  error,
+  myList,
+  onToggleList,
+  onPlayItem,
+  user,
+  onLogout,
+  query,
+  setQuery,
+}) {
   const navigate = useNavigate();
   const [typeFilter, setTypeFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
+  const [languageFilter, setLanguageFilter] = useState('all');
+  const [minRating, setMinRating] = useState('0');
   const [listFilter, setListFilter] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
   const [modalItem, setModalItem] = useState(null);
@@ -874,6 +1045,16 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
     () => Array.from(new Set(allMovies.map((item) => item.year).filter(Boolean))).sort((a, b) => b - a),
     [allMovies]
   );
+  const languages = useMemo(
+    () => Array.from(
+      new Set(
+        allMovies
+          .map((item) => String(item.language || item.audioLanguage || 'Unknown').trim())
+          .filter(Boolean)
+      )
+    ).sort(),
+    [allMovies]
+  );
 
   // Apply all active filters + search text + sort order to produce visible search results.
   const visibleItems = useMemo(() => {
@@ -890,6 +1071,14 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
       if (yearFilter !== 'all' && String(item.year) !== yearFilter) {
         return false;
       }
+      const itemLanguage = String(item.language || item.audioLanguage || 'Unknown').trim().toLowerCase();
+      if (languageFilter !== 'all' && itemLanguage !== languageFilter.toLowerCase()) {
+        return false;
+      }
+      const numericRating = Number.parseFloat(String(item.rating || '').replace(/[^\d.]/g, '')) || 0;
+      if (numericRating < Number(minRating || 0)) {
+        return false;
+      }
       if (listFilter === 'in-list' && !myListIds.has(item.id)) {
         return false;
       }
@@ -900,7 +1089,7 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
         return true;
       }
       const searchable = `${item.title} ${item.description || ''} ${item.category || ''}`.toLowerCase();
-      return searchable.includes(loweredQuery);
+      return fuzzyIncludes(searchable, loweredQuery);
     });
 
     if (sortBy === 'newest') {
@@ -912,7 +1101,7 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
     }
 
     return items;
-  }, [categoryFilter, deferredQuery, listFilter, myListIds, reloadedItems, sortBy, typeFilter, yearFilter]);
+  }, [categoryFilter, deferredQuery, languageFilter, listFilter, minRating, myListIds, reloadedItems, sortBy, typeFilter, yearFilter]);
 
   return (
     <div className="app-shell min-h-screen bg-black text-white">
@@ -972,6 +1161,34 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
                 {years.map((year) => (
                   <option key={year} value={String(year)}>{year}</option>
                 ))}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 text-xs uppercase tracking-wide text-neutral-400">Language</label>
+              <select
+                value={languageFilter}
+                onChange={(event) => setLanguageFilter(event.target.value)}
+                className="rounded border border-neutral-700 bg-black px-3 py-2 text-sm text-white outline-none focus:border-white"
+              >
+                <option value="all">All Languages</option>
+                {languages.map((language) => (
+                  <option key={language} value={language}>{language}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="mb-1 text-xs uppercase tracking-wide text-neutral-400">Min Rating</label>
+              <select
+                value={minRating}
+                onChange={(event) => setMinRating(event.target.value)}
+                className="rounded border border-neutral-700 bg-black px-3 py-2 text-sm text-white outline-none focus:border-white"
+              >
+                <option value="0">Any</option>
+                <option value="5">5+</option>
+                <option value="6">6+</option>
+                <option value="7">7+</option>
+                <option value="8">8+</option>
+                <option value="9">9+</option>
               </select>
             </div>
             <div className="flex flex-col">
@@ -1035,8 +1252,8 @@ function SearchPage({ allMovies, loading, error, myList, onToggleList, user, onL
                       setModalItem(nextItem);
                     }}
                     onPlay={(nextItem) => {
-                      setModalMode('play');
-                      setModalItem(nextItem);
+                      onPlayItem(nextItem);
+                      navigate(`/watch/${nextItem.id}`);
                     }}
                     inList={myListIds.has(item.id)}
                     onToggleList={onToggleList}
@@ -1079,6 +1296,7 @@ function LoginPage({ user, onLogin, movies }) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('user');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [slideIndex, setSlideIndex] = useState(0);
 
@@ -1127,6 +1345,20 @@ function LoginPage({ user, onLogin, movies }) {
   const onSubmit = async (event) => {
     event.preventDefault();
     setError('');
+    setNotice('');
+
+    if (mode === 'forgot') {
+      if (!email.trim()) {
+        setError('Please enter your email.');
+        return;
+      }
+      setSubmitting(true);
+      setTimeout(() => {
+        setSubmitting(false);
+        setNotice('Password reset link sent (demo mode).');
+      }, 700);
+      return;
+    }
 
     if (!email.trim() || !password.trim() || (mode === 'signup' && !name.trim())) {
       setError('Please fill all required fields.');
@@ -1181,10 +1413,14 @@ function LoginPage({ user, onLogin, movies }) {
           >
             <NetflixBrand />
           </button>
-          <h2 className="mt-8 text-4xl font-bold">{mode === 'signup' ? 'Create Account' : 'Sign In'}</h2>
+          <h2 className="mt-8 text-4xl font-bold">
+            {mode === 'signup' ? 'Create Account' : mode === 'forgot' ? 'Reset Password' : 'Sign In'}
+          </h2>
           <p className="mt-2 text-sm text-neutral-400">
             {mode === 'signup'
               ? 'Join now and continue watching where you left off.'
+              : mode === 'forgot'
+                ? 'Enter your email and we will send a reset link.'
               : 'Sign in to continue to Netflix Clone.'}
           </p>
 
@@ -1216,20 +1452,29 @@ function LoginPage({ user, onLogin, movies }) {
               placeholder="Email"
               className="w-full rounded bg-neutral-800 px-4 py-3 text-sm text-white outline-none ring-red-600 focus:ring-2"
             />
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Password"
-              className="w-full rounded bg-neutral-800 px-4 py-3 text-sm text-white outline-none ring-red-600 focus:ring-2"
-            />
+            {mode !== 'forgot' && (
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Password"
+                className="w-full rounded bg-neutral-800 px-4 py-3 text-sm text-white outline-none ring-red-600 focus:ring-2"
+              />
+            )}
             {error && <p className="text-sm text-red-400">{error}</p>}
+            {notice && <p className="text-sm text-green-400">{notice}</p>}
             <button
               type="submit"
               disabled={submitting}
               className="w-full rounded bg-red-600 py-3 font-semibold transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {submitting ? 'Please wait...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
+              {submitting
+                ? 'Please wait...'
+                : mode === 'signup'
+                  ? 'Create Account'
+                  : mode === 'forgot'
+                    ? 'Send Reset Link'
+                    : 'Sign In'}
             </button>
           </form>
 
@@ -1240,12 +1485,24 @@ function LoginPage({ user, onLogin, movies }) {
               onClick={() => {
                 setMode((prev) => (prev === 'signin' ? 'signup' : 'signin'));
                 setError('');
+                setNotice('');
               }}
               className="font-semibold text-white underline-offset-2 hover:underline"
             >
               {mode === 'signup' ? 'Sign in now' : 'Create one'}
             </button>
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              setMode((prev) => (prev === 'forgot' ? 'signin' : 'forgot'));
+              setError('');
+              setNotice('');
+            }}
+            className="mt-3 text-sm text-neutral-300 underline-offset-2 hover:text-white hover:underline"
+          >
+            {mode === 'forgot' ? 'Back to sign in' : 'Forgot password?'}
+          </button>
         </section>
 
         <section className="relative hidden h-[560px] overflow-hidden md:block">
@@ -1278,7 +1535,7 @@ function LoginPage({ user, onLogin, movies }) {
 }
 
 // ProfilePage: account summary screen showing profile and subscription stats.
-function ProfilePage({ user, onLogout, myListCount }) {
+function ProfilePage({ user, onLogout, myListCount, historyCount, activeProfileName, downloadCount }) {
   return (
     <div className="profile-shell min-h-screen bg-black px-4 py-10 text-white">
       <div className="profile-card glass-panel smooth-enter mx-auto mt-16 w-full max-w-3xl rounded-xl p-8">
@@ -1320,10 +1577,28 @@ function ProfilePage({ user, onLogout, myListCount }) {
             <p className="text-xs uppercase tracking-wider text-neutral-400">My List Titles</p>
             <p className="mt-1 text-base font-semibold text-white">{myListCount}</p>
           </div>
+          <div className="metric-card rounded-lg border border-white/10 bg-black/30 px-4 py-3 sm:col-span-2">
+            <p className="text-xs uppercase tracking-wider text-neutral-400">Watch History</p>
+            <p className="mt-1 text-base font-semibold text-white">{historyCount}</p>
+          </div>
+          <div className="metric-card rounded-lg border border-white/10 bg-black/30 px-4 py-3">
+            <p className="text-xs uppercase tracking-wider text-neutral-400">Active Profile</p>
+            <p className="mt-1 text-base font-semibold text-white">{activeProfileName}</p>
+          </div>
+          <div className="metric-card rounded-lg border border-white/10 bg-black/30 px-4 py-3">
+            <p className="text-xs uppercase tracking-wider text-neutral-400">Downloads</p>
+            <p className="mt-1 text-base font-semibold text-white">{downloadCount}</p>
+          </div>
         </div>
-        <div className="mt-7 flex gap-3">
+        <div className="mt-7 flex flex-wrap gap-3">
           <NavLink to="/my-list" className="cta-shimmer soft-ring rounded bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-neutral-200">
             Open My List
+          </NavLink>
+          <NavLink to="/watch-history" className="soft-ring rounded border border-neutral-500 px-4 py-2 text-sm font-semibold hover:border-white">
+            Watch History
+          </NavLink>
+          <NavLink to="/experience" className="soft-ring rounded border border-neutral-500 px-4 py-2 text-sm font-semibold hover:border-white">
+            Experience Hub
           </NavLink>
           <button
             type="button"
@@ -1354,6 +1629,335 @@ function HelpPage() {
           <p>4. Device setup and compatibility</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function WatchPlayerPage({ allMovies, onPlaybackProgress, onMarkPlayed }) {
+  const { contentId } = useParams();
+  const navigate = useNavigate();
+  const item = useMemo(
+    () => allMovies.find((movie) => String(movie.id) === String(contentId)),
+    [allMovies, contentId]
+  );
+  const [progress, setProgress] = useState(8);
+  const [autoNext, setAutoNext] = useState(true);
+
+  useEffect(() => {
+    if (item) {
+      onMarkPlayed(item);
+    }
+  }, [item, onMarkPlayed]);
+
+  useEffect(() => {
+    if (!item) {
+      return undefined;
+    }
+    const timer = setInterval(() => {
+      setProgress((current) => {
+        const next = Math.min(100, current + 2);
+        onPlaybackProgress(item, next);
+        return next;
+      });
+    }, 1600);
+    return () => clearInterval(timer);
+  }, [item, onPlaybackProgress]);
+
+  const related = useMemo(() => {
+    if (!item) {
+      return null;
+    }
+    return allMovies.find((movie) => String(movie.id) !== String(item.id) && normalizeContentType(movie.type) === normalizeContentType(item.type))
+      || allMovies.find((movie) => String(movie.id) !== String(item.id))
+      || null;
+  }, [allMovies, item]);
+
+  if (!item) {
+    return (
+      <div className="min-h-screen bg-black px-4 py-24 text-white">
+        <p className="text-lg">Title not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="relative h-[58vh] min-h-[320px] bg-black">
+        {item.trailerUrl ? (
+          <iframe
+            title={`${item.title} player`}
+            src={item.trailerUrl}
+            allow="autoplay; encrypted-media; picture-in-picture"
+            className="h-full w-full"
+          />
+        ) : (
+          <img src={item.backdrop || item.image} alt={item.title} className="h-full w-full object-cover" />
+        )}
+        <div className="absolute left-4 top-4 z-10 flex gap-2">
+          <button type="button" onClick={() => navigate(-1)} className="rounded bg-black/70 px-3 py-2 text-sm">Back</button>
+          <button type="button" onClick={() => setProgress(20)} className="rounded bg-black/70 px-3 py-2 text-sm">Skip Intro</button>
+          <button
+            type="button"
+            onClick={() => {
+              if (related) {
+                navigate(`/watch/${related.id}`);
+              }
+            }}
+            className="rounded bg-black/70 px-3 py-2 text-sm"
+          >
+            Next Episode
+          </button>
+        </div>
+      </div>
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        <h2 className="text-2xl font-bold">{item.title}</h2>
+        <p className="mt-2 text-sm text-neutral-300">{item.description}</p>
+        <div className="mt-5">
+          <div className="mb-2 flex items-center justify-between text-xs text-neutral-300">
+            <span>Playback Progress</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={progress}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              setProgress(next);
+              onPlaybackProgress(item, next);
+            }}
+            className="w-full accent-red-600"
+          />
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <input id="auto-next" type="checkbox" checked={autoNext} onChange={(event) => setAutoNext(event.target.checked)} />
+            <label htmlFor="auto-next">Auto play next episode</label>
+          </div>
+        </div>
+        {autoNext && progress >= 98 && related && (
+          <div className="mt-5 rounded border border-green-600/40 bg-green-900/20 p-3 text-sm text-green-100">
+            Episode complete. Up next: {related.title}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FeatureLabPage({
+  allMovies,
+  myList,
+  profiles,
+  activeProfileId,
+  onSwitchProfile,
+  onAddProfile,
+  kidsPin,
+  setKidsPin,
+  downloads,
+  onToggleDownload,
+  reviews,
+  onSaveReview,
+  onShareList,
+}) {
+  const [profileName, setProfileName] = useState('');
+  const [reviewMovieId, setReviewMovieId] = useState(() => String(allMovies[0]?.id || ''));
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
+  const [pinInput, setPinInput] = useState('');
+  const [pinStatus, setPinStatus] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
+
+  const currentProfile = profiles.find((entry) => entry.id === activeProfileId) || profiles[0];
+  const selectedMovie = allMovies.find((movie) => String(movie.id) === String(reviewMovieId));
+  const selectedMovieReviews = reviews[String(reviewMovieId)] || [];
+
+  return (
+    <div className="min-h-screen bg-black px-4 py-10 text-white">
+      <div className="mx-auto mt-16 w-full max-w-7xl space-y-6">
+        <h2 className="text-3xl font-bold">Feature Lab</h2>
+        <p className="text-neutral-300">Profiles, parental controls, downloads, ratings/reviews, and sharing in one place.</p>
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-4">
+            <h3 className="text-lg font-semibold">Profile Manager</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {profiles.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => onSwitchProfile(entry.id)}
+                  className={`rounded px-3 py-2 text-sm ${entry.id === currentProfile?.id ? 'bg-white text-black' : 'bg-neutral-800'}`}
+                >
+                  {entry.name} {entry.kids ? '(Kids)' : ''}
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <input value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="New profile name" className="rounded bg-black px-3 py-2 text-sm" />
+              <button
+                type="button"
+                onClick={() => {
+                  if (!profileName.trim()) return;
+                  onAddProfile(profileName.trim(), false);
+                  setProfileName('');
+                }}
+                className="rounded bg-red-600 px-3 py-2 text-sm font-semibold"
+              >
+                Add Profile
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-4">
+            <h3 className="text-lg font-semibold">Kids PIN Lock</h3>
+            <p className="mt-1 text-sm text-neutral-300">Current PIN: {kidsPin ? 'Set' : 'Not set'}</p>
+            <div className="mt-3 flex gap-2">
+              <input value={pinInput} onChange={(event) => setPinInput(event.target.value)} placeholder="4-digit PIN" className="rounded bg-black px-3 py-2 text-sm" />
+              <button
+                type="button"
+                onClick={() => {
+                  if (/^\d{4}$/.test(pinInput)) {
+                    setKidsPin(pinInput);
+                    setPinStatus('PIN updated');
+                    setPinInput('');
+                  } else {
+                    setPinStatus('Enter exactly 4 digits');
+                  }
+                }}
+                className="rounded bg-red-600 px-3 py-2 text-sm font-semibold"
+              >
+                Save PIN
+              </button>
+            </div>
+            {pinStatus && <p className="mt-2 text-xs text-neutral-300">{pinStatus}</p>}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-4">
+            <h3 className="text-lg font-semibold">Downloads (Offline Simulation)</h3>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {allMovies.slice(0, 9).map((movie) => {
+                const downloaded = downloads.includes(String(movie.id));
+                return (
+                  <button key={movie.id} type="button" onClick={() => onToggleDownload(movie)} className={`rounded border px-2 py-2 text-xs ${downloaded ? 'border-green-500 bg-green-900/20' : 'border-neutral-700 bg-black'}`}>
+                    {downloaded ? 'Downloaded' : 'Download'}: {movie.title}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded border border-neutral-800 bg-neutral-900 p-4">
+            <h3 className="text-lg font-semibold">Share Watchlist</h3>
+            <p className="mt-2 text-sm text-neutral-300">Create a sharable summary of your current list.</p>
+            <button
+              type="button"
+              onClick={() => {
+                const message = onShareList();
+                setShareMessage(message);
+              }}
+              className="mt-3 rounded bg-red-600 px-4 py-2 text-sm font-semibold"
+            >
+              Generate Share Link
+            </button>
+            {shareMessage && <p className="mt-2 text-xs text-neutral-200">{shareMessage}</p>}
+          </div>
+        </section>
+
+        <section className="rounded border border-neutral-800 bg-neutral-900 p-4">
+          <h3 className="text-lg font-semibold">Ratings and Reviews</h3>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+            <select value={reviewMovieId} onChange={(event) => setReviewMovieId(event.target.value)} className="rounded bg-black px-3 py-2 text-sm">
+              {allMovies.slice(0, 40).map((movie) => (
+                <option key={movie.id} value={String(movie.id)}>{movie.title}</option>
+              ))}
+            </select>
+            <input type="number" min="1" max="10" value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))} className="rounded bg-black px-3 py-2 text-sm" />
+            <input value={reviewText} onChange={(event) => setReviewText(event.target.value)} placeholder="Write a short review" className="rounded bg-black px-3 py-2 text-sm md:col-span-2" />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (!selectedMovie || !reviewText.trim()) return;
+              onSaveReview(selectedMovie.id, { rating: reviewRating, text: reviewText.trim() });
+              setReviewText('');
+            }}
+            className="mt-3 rounded bg-red-600 px-4 py-2 text-sm font-semibold"
+          >
+            Save Review
+          </button>
+          <div className="mt-4 space-y-2">
+            {selectedMovieReviews.map((entry) => (
+              <div key={entry.id} className="rounded border border-neutral-700 bg-black p-3 text-sm">
+                <p className="font-semibold">{entry.rating}/10</p>
+                <p className="text-neutral-300">{entry.text}</p>
+              </div>
+            ))}
+            {!selectedMovieReviews.length && <p className="text-sm text-neutral-400">No reviews yet for this title.</p>}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function WatchHistoryPage({ allMovies, watchHistory, myList, onToggleList, onPlayItem }) {
+  const navigate = useNavigate();
+  const [modalItem, setModalItem] = useState(null);
+  const [modalMode, setModalMode] = useState('info');
+  const myListIds = useMemo(() => new Set(myList.map((item) => item.id)), [myList]);
+
+  const historyItems = useMemo(() => {
+    const lookup = new Map(allMovies.map((movie) => [String(movie.id), movie]));
+    return watchHistory
+      .map((id) => lookup.get(String(id)))
+      .filter(Boolean);
+  }, [allMovies, watchHistory]);
+
+  return (
+    <div className="min-h-screen bg-black px-4 py-10 text-white">
+      <div className="mx-auto mt-16 w-full max-w-6xl">
+        <h2 className="text-3xl font-bold">Watch History</h2>
+        <p className="mt-2 text-neutral-300">Resume from titles you played recently.</p>
+        {historyItems.length ? (
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {historyItems.map((item) => (
+              <MovieCard
+                key={item.id}
+                item={item}
+                square
+                inList={myListIds.has(item.id)}
+                onToggleList={onToggleList}
+                onOpen={(nextItem) => {
+                  setModalMode('info');
+                  setModalItem(nextItem);
+                }}
+                onPlay={(nextItem) => {
+                  onPlayItem(nextItem);
+                  navigate(`/watch/${nextItem.id}`);
+                }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="glass-panel mt-8 rounded-lg border border-neutral-800 bg-neutral-900/70 p-8 text-center">
+            <p className="text-lg font-semibold">No watch history yet</p>
+            <p className="mt-2 text-neutral-300">Start playing any title to build your history.</p>
+          </div>
+        )}
+      </div>
+
+      <Suspense fallback={null}>
+        <DetailsModal
+          item={modalItem}
+          autoPlay={modalMode === 'play'}
+          inList={modalItem ? myListIds.has(modalItem.id) : false}
+          onToggleList={onToggleList}
+          onResolveTrailer={resolveTrailerForItem}
+          onClose={() => setModalItem(null)}
+        />
+      </Suspense>
     </div>
   );
 }
@@ -1612,30 +2216,36 @@ function UserManagementPanel({ user, title, subtitle, movies, myList, canManageR
 // AdminPage: limited admin wrapper around the shared user management panel.
 function AdminPage({ user, movies, myList }) {
   return (
-    <UserManagementPanel
-      user={user}
-      title="Admin Dashboard"
-      subtitle="Manage users, plans, and subscription status."
-      movies={movies}
-      myList={myList}
-      canManageRoles={false}
-      canDeleteUsers={false}
-    />
+    <div className="space-y-8">
+      <UserManagementPanel
+        user={user}
+        title="Admin Dashboard"
+        subtitle="Manage users, plans, and subscription status."
+        movies={movies}
+        myList={myList}
+        canManageRoles={false}
+        canDeleteUsers={false}
+      />
+      <AdminSuiteShowcase user={user} canManageRoles={false} canDeleteUsers={false} />
+    </div>
   );
 }
 
 // SuperAdminPage: full-access admin wrapper for role changes and account deletion.
 function SuperAdminPage({ user, movies, myList }) {
   return (
-    <UserManagementPanel
-      user={user}
-      title="Super Admin Console"
-      subtitle="Full control over users, roles, plans, and account lifecycle."
-      movies={movies}
-      myList={myList}
-      canManageRoles
-      canDeleteUsers
-    />
+    <div className="space-y-8">
+      <UserManagementPanel
+        user={user}
+        title="Super Admin Console"
+        subtitle="Full control over users, roles, plans, and account lifecycle."
+        movies={movies}
+        myList={myList}
+        canManageRoles
+        canDeleteUsers
+      />
+      <AdminSuiteShowcase user={user} canManageRoles canDeleteUsers />
+    </div>
   );
 }
 
@@ -1671,6 +2281,19 @@ function App() {
     ...readStorage(SETTINGS_KEY, DEFAULT_SETTINGS),
   }));
   const [searchQuery, setSearchQuery] = useState('');
+  const [watchProgress, setWatchProgress] = useState(() => readStorage(WATCH_PROGRESS_KEY, {}));
+  const [watchHistory, setWatchHistory] = useState(() => readStorage(WATCH_HISTORY_KEY, []));
+  const [profiles, setProfiles] = useState(() => {
+    const saved = readStorage(PROFILES_KEY, []);
+    if (Array.isArray(saved) && saved.length) {
+      return saved;
+    }
+    return [{ id: 'profile-main', name: 'Main', kids: false }];
+  });
+  const [activeProfileId, setActiveProfileId] = useState(() => readStorage(ACTIVE_PROFILE_KEY, 'profile-main'));
+  const [downloads, setDownloads] = useState(() => readStorage(DOWNLOADS_KEY, []));
+  const [reviews, setReviews] = useState(() => readStorage(REVIEWS_KEY, {}));
+  const [kidsPin, setKidsPin] = useState(() => readStorage(KIDS_PIN_KEY, ''));
 
   // Load movie catalog from backend when app starts.
   useEffect(() => {
@@ -1720,6 +2343,29 @@ function App() {
     writeStorage(SETTINGS_KEY, settings);
   }, [settings]);
 
+  useEffect(() => {
+    writeStorage(WATCH_PROGRESS_KEY, watchProgress);
+  }, [watchProgress]);
+
+  useEffect(() => {
+    writeStorage(WATCH_HISTORY_KEY, watchHistory);
+  }, [watchHistory]);
+  useEffect(() => {
+    writeStorage(PROFILES_KEY, profiles);
+  }, [profiles]);
+  useEffect(() => {
+    writeStorage(ACTIVE_PROFILE_KEY, activeProfileId);
+  }, [activeProfileId]);
+  useEffect(() => {
+    writeStorage(DOWNLOADS_KEY, downloads);
+  }, [downloads]);
+  useEffect(() => {
+    writeStorage(REVIEWS_KEY, reviews);
+  }, [reviews]);
+  useEffect(() => {
+    writeStorage(KIDS_PIN_KEY, kidsPin);
+  }, [kidsPin]);
+
   // Apply selected theme as CSS classes on the document root.
   useEffect(() => {
     const root = document.documentElement;
@@ -1743,7 +2389,87 @@ function App() {
     });
   }, []);
 
+  const onPlayItem = useCallback((item) => {
+    if (!item?.id) {
+      return;
+    }
+    const itemId = String(item.id);
+
+    setWatchProgress((current) => {
+      const previous = Number(current[itemId] || 0);
+      const nextValue = Math.min(95, previous + 15);
+      return { ...current, [itemId]: nextValue };
+    });
+
+    setWatchHistory((current) => {
+      const deduped = current.filter((id) => String(id) !== itemId);
+      return [itemId, ...deduped].slice(0, 50);
+    });
+  }, []);
+
+  const onPlaybackProgress = useCallback((item, percent) => {
+    if (!item?.id) {
+      return;
+    }
+    const itemId = String(item.id);
+    setWatchProgress((current) => ({ ...current, [itemId]: Math.max(0, Math.min(100, Number(percent) || 0)) }));
+  }, []);
+
+  const onAddProfile = useCallback((name, kids = false) => {
+    const id = `profile-${Date.now()}`;
+    setProfiles((current) => [...current, { id, name, kids }].slice(0, 8));
+    setActiveProfileId(id);
+  }, []);
+
+  const onToggleDownload = useCallback((item) => {
+    if (!item?.id) {
+      return;
+    }
+    const itemId = String(item.id);
+    setDownloads((current) => (
+      current.includes(itemId)
+        ? current.filter((id) => id !== itemId)
+        : [...current, itemId]
+    ));
+  }, []);
+
+  const onSaveReview = useCallback((movieId, review) => {
+    const id = `review-${Date.now()}`;
+    setReviews((current) => ({
+      ...current,
+      [String(movieId)]: [{ id, ...review }, ...(current[String(movieId)] || [])].slice(0, 15),
+    }));
+  }, []);
+
+  const onShareList = useCallback(() => {
+    const ids = myList.map((item) => item.id).slice(0, 20).join('-');
+    return `https://netflix-clone.local/share/${ids || 'empty-list'}`;
+  }, [myList]);
+
   const sections = useMemo(() => groupByCategory(movies), [movies]);
+  const topTenSection = useMemo(() => buildTopTenSection(movies), [movies]);
+  const continueWatchingSection = useMemo(
+    () => buildContinueWatchingSection(movies, watchProgress),
+    [movies, watchProgress]
+  );
+  const historySection = useMemo(
+    () => buildHistorySection(movies, watchHistory),
+    [movies, watchHistory]
+  );
+  const recommendationSection = useMemo(
+    () => buildRecommendationSection(movies, myList, watchHistory),
+    [movies, myList, watchHistory]
+  );
+  const homeSections = useMemo(
+    () => [
+      continueWatchingSection,
+      recommendationSection,
+      topTenSection,
+      historySection,
+      ...sections,
+    ].filter((section) => Array.isArray(section.items) && section.items.length > 0),
+    [continueWatchingSection, historySection, recommendationSection, sections, topTenSection]
+  );
   const myListSection = useMemo(
     () => [{ id: 'my-list', title: 'My List', items: myList }],
     [myList]
@@ -1756,6 +2482,7 @@ function App() {
     error,
     myList,
     onToggleList,
+    onPlayItem,
     user,
     onLogout: () => setUser(null),
     query: searchQuery,
@@ -1768,7 +2495,7 @@ function App() {
         path="/"
         element={
           <ProtectedRoute user={user}>
-            <HomePage view="home" sections={sections} {...sharedProps} />
+            <HomePage view="home" sections={homeSections} {...sharedProps} />
           </ProtectedRoute>
         }
       />
@@ -1776,7 +2503,7 @@ function App() {
         path="/movies"
         element={
           <ProtectedRoute user={user}>
-            <HomePage view="movies" sections={sections} {...sharedProps} />
+            <HomePage view="movies" sections={homeSections} {...sharedProps} />
           </ProtectedRoute>
         }
       />
@@ -1784,7 +2511,7 @@ function App() {
         path="/tv-shows"
         element={
           <ProtectedRoute user={user}>
-            <HomePage view="shows" sections={sections} {...sharedProps} />
+            <HomePage view="shows" sections={homeSections} {...sharedProps} />
           </ProtectedRoute>
         }
       />
@@ -1792,7 +2519,7 @@ function App() {
         path="/new-popular"
         element={
           <ProtectedRoute user={user}>
-            <HomePage view="new" sections={sections} {...sharedProps} />
+            <HomePage view="new" sections={homeSections} {...sharedProps} />
           </ProtectedRoute>
         }
       />
@@ -1812,6 +2539,25 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/watch/:contentId"
+        element={
+          <ProtectedRoute user={user}>
+            <AppPageLayout
+              user={user}
+              onLogout={() => setUser(null)}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+            >
+              <WatchPlayerPage
+                allMovies={movies}
+                onPlaybackProgress={onPlaybackProgress}
+                onMarkPlayed={onPlayItem}
+              />
+            </AppPageLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/login" element={<LoginPage user={user} onLogin={(nextUser) => setUser(normalizeUser(nextUser))} movies={movies} />} />
       <Route
         path="/profile"
@@ -1823,7 +2569,85 @@ function App() {
               query={searchQuery}
               setQuery={setSearchQuery}
             >
-              <ProfilePage user={user} onLogout={() => setUser(null)} myListCount={myList.length} />
+              <ProfilePage
+                user={user}
+                onLogout={() => setUser(null)}
+                myListCount={myList.length}
+                historyCount={watchHistory.length}
+                activeProfileName={(profiles.find((entry) => entry.id === activeProfileId) || profiles[0])?.name || 'Main'}
+                downloadCount={downloads.length}
+              />
+            </AppPageLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/watch-history"
+        element={
+          <ProtectedRoute user={user}>
+            <AppPageLayout
+              user={user}
+              onLogout={() => setUser(null)}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+            >
+              <WatchHistoryPage
+                allMovies={movies}
+                watchHistory={watchHistory}
+                myList={myList}
+                onToggleList={onToggleList}
+                onPlayItem={onPlayItem}
+              />
+            </AppPageLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/experience"
+        element={
+          <ProtectedRoute user={user}>
+            <AppPageLayout
+              user={user}
+              onLogout={() => setUser(null)}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+            >
+              <UserExperienceHub
+                user={user}
+                movies={movies}
+                myList={myList}
+                settings={settings}
+                onToggleList={onToggleList}
+              />
+            </AppPageLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feature-lab"
+        element={
+          <ProtectedRoute user={user}>
+            <AppPageLayout
+              user={user}
+              onLogout={() => setUser(null)}
+              query={searchQuery}
+              setQuery={setSearchQuery}
+            >
+              <FeatureLabPage
+                allMovies={movies}
+                myList={myList}
+                profiles={profiles}
+                activeProfileId={activeProfileId}
+                onSwitchProfile={setActiveProfileId}
+                onAddProfile={onAddProfile}
+                kidsPin={kidsPin}
+                setKidsPin={setKidsPin}
+                downloads={downloads}
+                onToggleDownload={onToggleDownload}
+                reviews={reviews}
+                onSaveReview={onSaveReview}
+                onShareList={onShareList}
+              />
             </AppPageLayout>
           </ProtectedRoute>
         }

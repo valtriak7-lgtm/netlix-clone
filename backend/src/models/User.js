@@ -58,6 +58,35 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerification: {
+      tokenHash: { type: String, default: '' },
+      expiresAt: { type: Date, default: null },
+      requestedAt: { type: Date, default: null },
+      verifiedAt: { type: Date, default: null },
+    },
+    passwordReset: {
+      tokenHash: { type: String, default: '' },
+      expiresAt: { type: Date, default: null },
+      requestedAt: { type: Date, default: null },
+      usedAt: { type: Date, default: null },
+    },
+    refreshTokens: {
+      type: [
+        {
+          tokenHash: { type: String, required: true },
+          createdAt: { type: Date, default: Date.now },
+          expiresAt: { type: Date, required: true },
+          revokedAt: { type: Date, default: null },
+          userAgent: { type: String, default: '' },
+          ipAddress: { type: String, default: '' },
+        },
+      ],
+      default: [],
+    },
     isSuspended: {
       type: Boolean,
       default: false,
@@ -73,6 +102,21 @@ const userSchema = new mongoose.Schema(
           title: { type: String, default: '' },
           watchedAt: { type: Date, default: Date.now },
           progressMinutes: { type: Number, default: 0 },
+        },
+      ],
+      default: [],
+    },
+    watchProgress: {
+      type: [
+        {
+          movieId: { type: mongoose.Schema.Types.ObjectId, ref: 'Movie', default: null },
+          title: { type: String, default: '' },
+          progressPercent: { type: Number, default: 0 },
+          lastPositionSeconds: { type: Number, default: 0 },
+          durationSeconds: { type: Number, default: 0 },
+          seasonNumber: { type: Number, default: null },
+          episodeNumber: { type: Number, default: null },
+          updatedAt: { type: Date, default: Date.now },
         },
       ],
       default: [],
